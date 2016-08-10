@@ -57,6 +57,7 @@ type Payer interface {
 	Store(pm *PaymentMethod, opts *Options) (Response, error)
 }
 
+// TBD
 type CCManager interface {
 	Store(pm *PaymentMethod, opts *Options) error
 	Unstore(pm *PaymentMethod, opts *Options) error
