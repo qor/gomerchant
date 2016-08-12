@@ -1,65 +1,53 @@
 package gomerchant
 
-type PaymentMethod struct {
-	Token      string
-	CreditCard *CreditCard
+import (
+	"log"
+	"os"
+)
 
-	// TBD
-	// BankAccount
-	// Identifier
+type Gomerchant struct {
+	PaymentGateway PaymentGateway
+	Config         *Config
 }
 
-type CreditCard struct {
-	Name     string
-	Number   string
-	ExpMonth int
-	ExpYear  int
-	CVC      string
+type Config struct {
+	Logger Logger
 }
 
-type Options struct {
-	OrderID         string
-	Currency        string
-	Email           string
-	IP              string
-	Customer        string
-	Invoice         string
-	Merchant        string
-	Description     string
-	BillingAddress  *Address
-	ShippingAddress *Address
-
-	Extra interface{}
+type Logger interface {
+	Print(values ...interface{})
 }
 
-type Address struct {
-	Name     string
-	Company  string
-	Address1 string
-	Address2 string
-	City     string
-	State    string
-	Country  string
-	ZIP      string
-	Phone    string
+func New(paymentGateway PaymentGateway, config *Config) *Gomerchant {
+	if config.Logger == nil {
+		config.Logger = log.New(os.Stdout, "\r\n", 0)
+	}
+
+	return &Gomerchant{PaymentGateway: paymentGateway, Config: config}
 }
 
-type Response struct {
-	ID    string
-	Extra interface{}
+// TBD: logger, common error validations...
+
+func (gomerchant *Gomerchant) Purchase(amount uint64, pm *PaymentMethod, params *PurchaseParams) (PurchaseResponse, error) {
+	response, err := gomerchant.Purchase(amount, pm, params)
+	gomerchant.Config.Logger.Print("Purchase", pm, params, response, err)
+	return response, err
 }
 
-type Payer interface {
-	Purchase(amount uint64, pm *PaymentMethod, opts *Options) (Response, error)
-	Authorize(amount uint64, pm *PaymentMethod, opts *Options) (Response, error)
-	Capture(amount uint64, id string, opts *Options) (Response, error)
-	Void(id string, opts *Options) (Response, error)
-	Store(pm *PaymentMethod, opts *Options) (Response, error)
+func (gomerchant *Gomerchant) Authorize(amount uint64, pm *PaymentMethod, params *AuthorizeParams) (AuthorizeResponse, error) {
+	response, err := gomerchant.Authorize(amount, pm, params)
+	gomerchant.Config.Logger.Print("Authorize", pm, params, response, err)
+	return response, err
 }
 
-// TBD
-type CCManager interface {
-	Store(pm *PaymentMethod, opts *Options) error
-	Unstore(pm *PaymentMethod, opts *Options) error
-	Update(pm *PaymentMethod, opts *Options) error
+func (gomerchant *Gomerchant) Capture(transactionID string, params *CaptureParams) (CaptureResponse, error) {
+	response, err := gomerchant.Capture(transactionID, params)
+	gomerchant.Config.Logger.Print("Capture", transactionID, response, err)
+	return response, err
+}
+
+func (gomerchant *Gomerchant) Void(transactionID string, params *VoidParams) (VoidResponse, error) {
+	response, err := gomerchant.Void(transactionID, params)
+	gomerchant.Config.Logger.Print("Void", transactionID, params, response, err)
+	return response, err
 }
