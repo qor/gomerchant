@@ -11,7 +11,7 @@ type PaymentMethod struct {
 type CreditCard struct {
 	Name     string
 	Number   string
-	ExpMonth int
-	ExpYear  int
+	ExpMonth string
+	ExpYear  string
 	CVC      string
 }
