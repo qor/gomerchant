@@ -1,4 +1,4 @@
-// package gmstripe implements GoMerchant payment gateway for Stripe.
+// Package gmstripe implements GoMerchant payment gateway for Stripe.
 //
 package gmstripe
 
@@ -9,15 +9,24 @@ import (
 	"github.com/stripe/stripe-go/refund"
 )
 
+// Stripe implements gomerchant.PaymetGateway interface.
 type Stripe struct{}
 
 var _ gomerchant.PaymentGateway = Stripe{}
 
+// NewStripe creates Stripe struct.
+//
+// Note: gmstripe doesn't support multiple Stripe accounts in the same process
+// because it depends on github.com/stripe/stripe-go, which is the official Go
+// SDK from Stripe and it's using a global key variable: stripe.Key.
 func NewStripe(key string) *Stripe {
 	stripe.Key = key
 	return new(Stripe)
 }
 
+// PurchaseOptions specifies charge options supported by Stripe, under the
+// hood, gmstripe converts it to a stripe.ChargeParams.
+// This option could be used in Stripe.Purchase and Stripe.Authorize.
 type PurchaseOptions struct {
 	Params                       stripe.Params
 	Desc, Statement, Email, Dest string
@@ -32,6 +41,7 @@ func isPurchaseOptions(opt interface{}) bool {
 	return ok
 }
 
+// ExtraKey is the only map key used by gmstripe in gomerchant.Extra options.
 const ExtraKey = "stripe"
 
 // Purchase creates a Stripe charge.
@@ -105,6 +115,8 @@ func makeCharge(amount uint64, capture bool, pm *gomerchant.PaymentMethod, param
 	return charge.New(cp)
 }
 
+// CardOptions specifies a credit card options supported by Stripe. It's
+// converted into stripe.CardParams under the hood.
 type CardOptions struct {
 	Params  stripe.Params
 	Default bool
