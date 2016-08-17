@@ -258,28 +258,28 @@ func mapError(err error) error {
 	}
 
 	switch serr.Code {
-	case IncorrectNum:
-		return ErrIncorrectNumber
-	case InvalidNum:
-		return ErrInvalidNumber
-	case InvalidExpM:
-		return ErrInvalidExpiryMonth
-	case InvalidExpY:
-		return ErrInvalidExpiryYear
-	case InvalidCvc:
-		return ErrInvalidCVC
-	case ExpiredCard:
-		return ErrExpiredCard
-	case IncorrectCvc:
-		return ErrIncorrectCVC
-	case IncorrectZip:
-		return ErrIncorrectZip
-	case CardDeclined:
-		return ErrCardDeclined
-	case Missing:
-		return ErrMissing
-	case ProcessingErr:
-		return ErrProcessingError
+	case stripe.IncorrectNum:
+		return gomerchant.ErrIncorrectNumber
+	case stripe.InvalidNum:
+		return gomerchant.ErrInvalidNumber
+	case stripe.InvalidExpM:
+		return gomerchant.ErrInvalidExpiryMonth
+	case stripe.InvalidExpY:
+		return gomerchant.ErrInvalidExpiryYear
+	case stripe.InvalidCvc:
+		return gomerchant.ErrInvalidCVC
+	case stripe.ExpiredCard:
+		return gomerchant.ErrExpiredCard
+	case stripe.IncorrectCvc:
+		return gomerchant.ErrIncorrectCVC
+	case stripe.IncorrectZip:
+		return gomerchant.ErrIncorrectZip
+	case stripe.CardDeclined:
+		return gomerchant.ErrCardDeclined
+	case stripe.Missing:
+		return gomerchant.ErrMissing
+	case stripe.ProcessingErr:
+		return gomerchant.ErrProcessingError
 	}
 
 	return err
