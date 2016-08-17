@@ -4,7 +4,7 @@ type Extra struct {
 	params map[string]interface{}
 }
 
-func (extra *Extra) Get(key string) (interface{}, bool) {
+func (extra Extra) Get(key string) (interface{}, bool) {
 	if extra.params == nil {
 		return nil, false
 	}
