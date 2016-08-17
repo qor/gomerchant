@@ -45,7 +45,7 @@ func init() {
 	cardToken = scard.ID
 }
 
-func TestPurchase(t *testing.T) {
+func TestStripe(t *testing.T) {
 	gmstripe := NewStripe(key)
 
 	for i, pm := range []gomerchant.PaymentMethod{

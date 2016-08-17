@@ -1,3 +1,5 @@
+// package gmstripe implements GoMerchant payment gateway for Stripe.
+//
 package gmstripe
 
 import (
@@ -32,6 +34,17 @@ func isPurchaseOptions(opt interface{}) bool {
 
 const ExtraKey = "stripe"
 
+// Purchase creates a Stripe charge.
+//
+// PaymentMethod could be either a credit card token returned by Stripe or a
+// credit card. If PaymentMethod is a token, you need to specify a customer
+// token by PurchaseParams.
+//
+// Set a pointer to PurchaseOptions in PurchaseParams by key constant ExtraKey.
+//     PurchaseParams.Extra.Set(ExtraKey, &PurchaseOptions{})
+//
+// To retrieve stripe.Charge object returned by Purchase:
+//     resp.Get(ExtraKey).(*stripe.Charge)
 func (s Stripe) Purchase(amount uint64, pm *gomerchant.PaymentMethod, params *gomerchant.PurchaseParams) (gomerchant.PurchaseResponse, error) {
 	var cparams *chargeParams
 	if params != nil {
@@ -53,7 +66,7 @@ func (s Stripe) Purchase(amount uint64, pm *gomerchant.PaymentMethod, params *go
 		resp.TransactionID = scharge.ID
 		resp.Extra.Set(ExtraKey, scharge)
 	}
-	return resp, err
+	return resp, mapError(err)
 }
 
 type chargeParams struct {
@@ -141,6 +154,9 @@ func toStripeCC(cc *gomerchant.CreditCard, params *chargeParams) *stripe.CardPar
 	return &cm
 }
 
+// Authorize creates uncaptured charge.
+//
+// Usage is similar to Purchase.
 func (s Stripe) Authorize(amount uint64, pm *gomerchant.PaymentMethod, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
 	var cparams *chargeParams
 	if params != nil {
@@ -162,9 +178,14 @@ func (s Stripe) Authorize(amount uint64, pm *gomerchant.PaymentMethod, params *g
 		resp.TransactionID = scharge.ID
 		resp.Extra.Set(ExtraKey, scharge)
 	}
-	return resp, err
+	return resp, mapError(err)
 }
 
+// Capture captures a charge.
+//
+// Specify *stripe.CapatureParams in gomerchant.CaptureParams by constant key ExtraKey.
+// To retrieve *stripe.Stripe charge struct:
+//     resp.Get(ExtraKey).(*stripe.Charge)
 func (s Stripe) Capture(id string, params *gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {
 	var sparams *stripe.CaptureParams
 	if params != nil {
@@ -184,9 +205,16 @@ func (s Stripe) Capture(id string, params *gomerchant.CaptureParams) (gomerchant
 		resp.TransactionID = scharge.ID
 		resp.Extra.Set(ExtraKey, scharge)
 	}
-	return resp, err
+	return resp, mapError(err)
 }
 
+// Void returnds a charge.
+//
+// To do partial refund, you can specify amount:
+//     var params gomerchant.VoidParams
+//     params.Set(ExtraKey, &stripe.RefundParams{Amount: x})
+//
+// Retrieve stripe charge object from gomerchant.VoidResponse.
 func (s Stripe) Void(id string, params *gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
 	var sparams *stripe.RefundParams
 	if params != nil {
@@ -204,5 +232,43 @@ func (s Stripe) Void(id string, params *gomerchant.VoidParams) (gomerchant.VoidR
 		resp.TransactionID = srefund.ID
 		resp.Extra.Set(ExtraKey, srefund)
 	}
-	return resp, err
+	return resp, mapError(err)
+}
+
+func mapError(err error) error {
+	if err == nil {
+		return err
+	}
+
+	serr, ok := err.(*stripe.Error)
+	if !ok {
+		return err
+	}
+
+	switch serr.Code {
+	case IncorrectNum:
+		return ErrIncorrectNumber
+	case InvalidNum:
+		return ErrInvalidNumber
+	case InvalidExpM:
+		return ErrInvalidExpiryMonth
+	case InvalidExpY:
+		return ErrInvalidExpiryYear
+	case InvalidCvc:
+		return ErrInvalidCVC
+	case ExpiredCard:
+		return ErrExpiredCard
+	case IncorrectCvc:
+		return ErrIncorrectCVC
+	case IncorrectZip:
+		return ErrIncorrectZip
+	case CardDeclined:
+		return ErrCardDeclined
+	case Missing:
+		return ErrMissing
+	case ProcessingErr:
+		return ErrProcessingError
+	}
+
+	return err
 }
