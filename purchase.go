@@ -8,6 +8,7 @@ type PurchaseParams struct {
 	OrderID         string
 	BillingAddress  *Address
 	ShippingAddress *Address
+	PaymentMethod   *PaymentMethod
 	Extra
 }
 

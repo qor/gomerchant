@@ -19,11 +19,11 @@ func New(config *Config) *Paygent {
 	}
 }
 
-func (*Paygent) Purchase(amount uint64, pm *gomerchant.PaymentMethod, params *gomerchant.PurchaseParams) (gomerchant.PurchaseResponse, error) {
+func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gomerchant.PurchaseResponse, error) {
 	return gomerchant.PurchaseResponse{}, nil
 }
 
-func (*Paygent) Authorize(amount uint64, pm *gomerchant.PaymentMethod, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
+func (*Paygent) Authorize(amount uint64, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
 	return gomerchant.AuthorizeResponse{}, nil
 }
 
