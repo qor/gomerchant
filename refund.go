@@ -1,10 +1,10 @@
 package gomerchant
 
 type RefundParams struct {
-	Extra
+	Params
 }
 
 type RefundResponse struct {
 	TransactionID string
-	Extra
+	Params
 }

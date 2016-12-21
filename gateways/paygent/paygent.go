@@ -3,8 +3,11 @@ package paygent
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"path"
 
 	"github.com/qor/gomerchant"
 )
@@ -18,6 +21,7 @@ type Config struct {
 	Password       string
 	MerchantID     string
 	ClientFilePath string
+	ProductionMode bool
 }
 
 func New(config *Config) *Paygent {
@@ -45,10 +49,34 @@ func (paygent *Paygent) Client() *http.Client {
 	return &http.Client{Transport: transport}
 }
 
-func (paygent *Paygent) Request(telegramKind string, params gomerchant.Extra) gomerchant.Extra {
+func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (string, error) {
+	var (
+		domain  = TelegramServiceSandboxDomain
+		urlPath string
+	)
+
+	if paygent.Config.ProductionMode {
+		domain = TelegramServiceDomain
+	}
+
+	for i := 0; i < len(telegramKind)-1; i++ {
+		if p, ok := TelegramServiceURLs[telegramKind[0:len(telegramKind)-i]]; ok {
+			urlPath = p
+		}
+	}
+	return path.Join(domain, urlPath), nil
+}
+
+func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (gomerchant.Params, error) {
 	client := paygent.Client()
-	client.PostForm()
-	return gomerchant.Extra{}
+	if serviceURL, err := paygent.serviceURLOfTelegramKind(telegramKind); err == nil {
+		var urlValues url.Values
+		for key, value := range params {
+			urlValues.Add(key, fmt.Sprint(value))
+		}
+		client.PostForm(serviceURL, urlValues)
+	}
+	return gomerchant.Params{}, nil
 }
 
 func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gomerchant.PurchaseResponse, error) {

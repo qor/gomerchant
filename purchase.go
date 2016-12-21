@@ -9,10 +9,10 @@ type PurchaseParams struct {
 	BillingAddress  *Address
 	ShippingAddress *Address
 	PaymentMethod   *PaymentMethod
-	Extra
+	Params
 }
 
 type PurchaseResponse struct {
 	TransactionID string
-	Extra
+	Params
 }

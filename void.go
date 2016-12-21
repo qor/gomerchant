@@ -1,10 +1,10 @@
 package gomerchant
 
 type VoidParams struct {
-	Extra
+	Params
 }
 
 type VoidResponse struct {
 	TransactionID string
-	Extra
+	Params
 }

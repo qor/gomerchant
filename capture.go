@@ -2,10 +2,10 @@ package gomerchant
 
 type CaptureParams struct {
 	Amount uint64
-	Extra
+	Params
 }
 
 type CaptureResponse struct {
 	TransactionID string
-	Extra
+	Params
 }

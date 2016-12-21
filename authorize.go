@@ -9,10 +9,10 @@ type AuthorizeParams struct {
 	BillingAddress  *Address
 	ShippingAddress *Address
 	PaymentMethod   *PaymentMethod
-	Extra
+	Params
 }
 
 type AuthorizeResponse struct {
 	TransactionID string
-	Extra
+	Params
 }
