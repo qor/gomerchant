@@ -30,23 +30,23 @@ func New(config *Config) *Paygent {
 	}
 }
 
-func (paygent *Paygent) Client() *http.Client {
+func (paygent *Paygent) Client() (*http.Client, error) {
 	// Load CA cert
 	caCertPool := x509.NewCertPool()
 	if pemData, err := ioutil.ReadFile(paygent.Config.ClientFilePath); err == nil {
 		caCertPool.AppendCertsFromPEM(pemData)
-	} else {
-		panic(err)
-	}
 
-	// Setup HTTPS client
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{},
-		RootCAs:      caCertPool,
+		// Setup HTTPS client
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{},
+			RootCAs:      caCertPool,
+		}
+		tlsConfig.BuildNameToCertificate()
+		transport := &http.Transport{TLSClientConfig: tlsConfig}
+		return &http.Client{Transport: transport}, nil
+	} else {
+		return nil, err
 	}
-	tlsConfig.BuildNameToCertificate()
-	transport := &http.Transport{TLSClientConfig: tlsConfig}
-	return &http.Client{Transport: transport}
 }
 
 func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (string, error) {
@@ -68,15 +68,20 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (string, e
 }
 
 func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (gomerchant.Params, error) {
-	client := paygent.Client()
-	if serviceURL, err := paygent.serviceURLOfTelegramKind(telegramKind); err == nil {
-		var urlValues url.Values
-		for key, value := range params {
-			urlValues.Add(key, fmt.Sprint(value))
+	if client, err := paygent.Client(); err == nil {
+		if serviceURL, err := paygent.serviceURLOfTelegramKind(telegramKind); err == nil {
+			var urlValues url.Values
+			for key, value := range params {
+				urlValues.Add(key, fmt.Sprint(value))
+			}
+			response, err := client.PostForm(serviceURL, urlValues)
+			return gomerchant.Params{}, err
+		} else {
+			return gomerchant.Params{}, err
 		}
-		client.PostForm(serviceURL, urlValues)
+	} else {
+		return gomerchant.Params{}, err
 	}
-	return gomerchant.Params{}, nil
 }
 
 func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gomerchant.PurchaseResponse, error) {
