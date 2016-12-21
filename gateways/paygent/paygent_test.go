@@ -10,9 +10,10 @@ import (
 var Paygent *paygent.Paygent
 
 func init() {
-	Paygent = paygent.New(&paygent.Config{})
+	Paygent = paygent.New(&paygent.Config{ClientFilePath: "paygent.pem"})
 }
 
 func TestPurchase(t *testing.T) {
+	Paygent.Client()
 	Paygent.Authorize(100, &gomerchant.AuthorizeParams{})
 }
