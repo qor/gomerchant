@@ -31,6 +31,10 @@ func (*Paygent) Capture(transactionID string, params *gomerchant.CaptureParams) 
 	return gomerchant.CaptureResponse{}, nil
 }
 
+func (*Paygent) Refund(transactionID string, params *gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
+	return gomerchant.RefundResponse{}, nil
+}
+
 func (*Paygent) Void(transactionID string, params *gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
 	return gomerchant.VoidResponse{}, nil
 }

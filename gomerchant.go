@@ -46,6 +46,12 @@ func (gomerchant *Gomerchant) Capture(transactionID string, params *CaptureParam
 	return response, err
 }
 
+func (gomerchant *Gomerchant) Refund(transactionID string, params *RefundParams) (RefundResponse, error) {
+	response, err := gomerchant.Refund(transactionID, params)
+	gomerchant.Config.Logger.Print("Refund", transactionID, params, response, err)
+	return response, err
+}
+
 func (gomerchant *Gomerchant) Void(transactionID string, params *VoidParams) (VoidResponse, error) {
 	response, err := gomerchant.Void(transactionID, params)
 	gomerchant.Config.Logger.Print("Void", transactionID, params, response, err)
