@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
+	"strings"
 
 	"github.com/qor/gomerchant"
 )
@@ -89,7 +91,12 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 		}
 		tlsConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
-		return &http.Client{Transport: transport}, nil
+		cookieJar, _ := cookiejar.New(nil)
+
+		return &http.Client{
+			Transport: transport,
+			Jar:       cookieJar,
+		}, nil
 	} else {
 		return nil, err
 	}
@@ -130,8 +137,11 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 				urlValues.Add(key, fmt.Sprint(value))
 			}
 
-			serviceURL.RawQuery = urlValues.Encode()
-			response, err := client.PostForm(serviceURL.String(), url.Values{})
+			req, _ := http.NewRequest("POST", serviceURL.String(), strings.NewReader(urlValues.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			req.Header.Set("charset", "Windows-31J")
+			req.Header.Set("User-Agent", "curl_php")
+			response, err := client.Do(req)
 
 			if err == nil {
 				if response.StatusCode == 200 {

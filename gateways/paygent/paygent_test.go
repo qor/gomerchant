@@ -43,10 +43,11 @@ func init() {
 		CertPassword:    config.CertPassword,
 		CAFilePath:      config.CAFilePath,
 		TelegramVersion: config.TelegramVersion,
+		ProductionMode:  config.ProductionMode,
 	})
 }
 
 func TestPurchase(t *testing.T) {
-	fmt.Println(Paygent.Request("094", nil))
+	Paygent.Request("094", nil)
 	Paygent.Authorize(100, &gomerchant.AuthorizeParams{})
 }
