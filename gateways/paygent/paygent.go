@@ -80,8 +80,9 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 	if cert, err := tls.X509KeyPair(certBytes, certKeyBytes); err == nil {
 		// Setup HTTPS client
 		tlsConfig := &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			RootCAs:      caCertPool,
+			Certificates:  []tls.Certificate{cert},
+			RootCAs:       caCertPool,
+			Renegotiation: tls.RenegotiateFreelyAsClient,
 		}
 		tlsConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
