@@ -32,31 +32,34 @@ func New(config *Config) *Paygent {
 }
 
 func (paygent *Paygent) Client() (*http.Client, error) {
-	// Load CA cert
 	var (
-		certs      []*x509.Certificate
-		caCertPool = x509.NewCertPool()
+		certBytes, certKeyBytes []byte
+		caCertPool              = x509.NewCertPool()
 	)
 
 	if pemData, err := ioutil.ReadFile(paygent.Config.ClientFilePath); err == nil {
+		var (
+			originalPemData []byte
+			block           *pem.Block
+		)
+
 		caCertPool.AppendCertsFromPEM(pemData)
 
 		for len(pemData) > 0 {
-			var block *pem.Block
-			block, pemData = pem.Decode(pemData)
-			if block == nil {
+			originalPemData = pemData
+			if block, pemData = pem.Decode(pemData); block == nil {
 				break
 			}
-			if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
-				continue
+
+			if block.Type == "CERTIFICATE" && len(certBytes) == 0 {
+				if len(certBytes) == 0 {
+					certBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
+				}
 			}
 
-			cert, err := x509.ParseCertificate(block.Bytes)
-			if err != nil {
-				continue
+			if block.Type == "RSA PRIVATE KEY" {
+				certKeyBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
 			}
-
-			certs = append(certs, cert)
 		}
 	}
 
@@ -64,18 +67,18 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 		caCertPool.AppendCertsFromPEM(pemData)
 	}
 
-	fmt.Println(tls.X509KeyPair(certs[0].Raw, certs[1].Raw))
-
-	// Setup HTTPS client
-	tlsConfig := &tls.Config{
-		Certificates: []tls.Certificate{},
-		RootCAs:      caCertPool,
-		MinVersion:   tls.VersionTLS10,
-		MaxVersion:   tls.VersionTLS10,
+	if cert, err := tls.X509KeyPair(certBytes, certKeyBytes); err == nil {
+		// Setup HTTPS client
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      caCertPool,
+		}
+		tlsConfig.BuildNameToCertificate()
+		transport := &http.Transport{TLSClientConfig: tlsConfig}
+		return &http.Client{Transport: transport}, nil
+	} else {
+		return nil, err
 	}
-	tlsConfig.BuildNameToCertificate()
-	transport := &http.Transport{TLSClientConfig: tlsConfig}
-	return &http.Client{Transport: transport}, nil
 }
 
 func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (string, error) {
