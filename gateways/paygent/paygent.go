@@ -3,11 +3,11 @@ package paygent
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 
 	"github.com/qor/gomerchant"
 )
@@ -21,6 +21,7 @@ type Config struct {
 	Password       string
 	MerchantID     string
 	ClientFilePath string
+	CAFilePath     string
 	ProductionMode bool
 }
 
@@ -32,21 +33,49 @@ func New(config *Config) *Paygent {
 
 func (paygent *Paygent) Client() (*http.Client, error) {
 	// Load CA cert
-	caCertPool := x509.NewCertPool()
+	var (
+		certs      []*x509.Certificate
+		caCertPool = x509.NewCertPool()
+	)
+
 	if pemData, err := ioutil.ReadFile(paygent.Config.ClientFilePath); err == nil {
 		caCertPool.AppendCertsFromPEM(pemData)
 
-		// Setup HTTPS client
-		tlsConfig := &tls.Config{
-			Certificates: []tls.Certificate{},
-			RootCAs:      caCertPool,
+		for len(pemData) > 0 {
+			var block *pem.Block
+			block, pemData = pem.Decode(pemData)
+			if block == nil {
+				break
+			}
+			if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+				continue
+			}
+
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				continue
+			}
+
+			certs = append(certs, cert)
 		}
-		tlsConfig.BuildNameToCertificate()
-		transport := &http.Transport{TLSClientConfig: tlsConfig}
-		return &http.Client{Transport: transport}, nil
-	} else {
-		return nil, err
 	}
+
+	if pemData, err := ioutil.ReadFile(paygent.Config.CAFilePath); err == nil {
+		caCertPool.AppendCertsFromPEM(pemData)
+	}
+
+	fmt.Println(tls.X509KeyPair(certs[0].Raw, certs[1].Raw))
+
+	// Setup HTTPS client
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{},
+		RootCAs:      caCertPool,
+		MinVersion:   tls.VersionTLS10,
+		MaxVersion:   tls.VersionTLS10,
+	}
+	tlsConfig.BuildNameToCertificate()
+	transport := &http.Transport{TLSClientConfig: tlsConfig}
+	return &http.Client{Transport: transport}, nil
 }
 
 func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (string, error) {
@@ -64,7 +93,10 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (string, e
 			urlPath = p
 		}
 	}
-	return path.Join(domain, urlPath), nil
+
+	u, err := url.Parse(domain)
+	u.Path = urlPath
+	return u.String(), err
 }
 
 func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (gomerchant.Params, error) {
@@ -75,6 +107,11 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 				urlValues.Add(key, fmt.Sprint(value))
 			}
 			response, err := client.PostForm(serviceURL, urlValues)
+			if err == nil && response.StatusCode == 200 {
+				var bodyBytes []byte
+				response.Body.Read(bodyBytes)
+				fmt.Println(string(bodyBytes))
+			}
 			return gomerchant.Params{}, err
 		} else {
 			return gomerchant.Params{}, err

@@ -1,6 +1,7 @@
 package paygent_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/qor/gomerchant"
@@ -10,10 +11,10 @@ import (
 var Paygent *paygent.Paygent
 
 func init() {
-	Paygent = paygent.New(&paygent.Config{ClientFilePath: "paygent.pem"})
+	Paygent = paygent.New(&paygent.Config{ClientFilePath: "paygent.pem", CAFilePath: "curl-ca-bundle.crt"})
 }
 
 func TestPurchase(t *testing.T) {
-	Paygent.Client()
+	fmt.Println(Paygent.Request("094", nil))
 	Paygent.Authorize(100, &gomerchant.AuthorizeParams{})
 }
