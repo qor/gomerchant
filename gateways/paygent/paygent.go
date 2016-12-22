@@ -3,6 +3,7 @@ package paygent
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -21,6 +22,7 @@ type Config struct {
 	Password       string
 	MerchantID     string
 	ClientFilePath string
+	CertPassword   string
 	CAFilePath     string
 	ProductionMode bool
 }
@@ -58,7 +60,15 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 			}
 
 			if block.Type == "RSA PRIVATE KEY" {
-				certKeyBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
+				if x509.IsEncryptedPEMBlock(block) {
+					if results, err := x509.DecryptPEMBlock(block, []byte(paygent.Config.CertPassword)); err == nil {
+						certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(results) + "\n-----END RSA PRIVATE KEY-----")
+					} else {
+						return nil, err
+					}
+				} else {
+					certKeyBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
+				}
 			}
 		}
 	}

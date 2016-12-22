@@ -11,7 +11,7 @@ import (
 var Paygent *paygent.Paygent
 
 func init() {
-	Paygent = paygent.New(&paygent.Config{ClientFilePath: "paygent.pem", CAFilePath: "curl-ca-bundle.crt"})
+	Paygent = paygent.New(&paygent.Config{ClientFilePath: "paygent.pem", CAFilePath: "curl-ca-bundle.crt", CertPassword: "changeit"})
 }
 
 func TestPurchase(t *testing.T) {
