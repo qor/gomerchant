@@ -18,12 +18,15 @@ type Paygent struct {
 }
 
 type Config struct {
-	Account        string
-	Password       string
-	MerchantID     string
+	MerchantID      string
+	ConnectID       string
+	ConnectPassword string
+	TelegramVersion string
+
 	ClientFilePath string
 	CertPassword   string
 	CAFilePath     string
+
 	ProductionMode bool
 }
 
@@ -92,7 +95,7 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 	}
 }
 
-func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (string, error) {
+func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL, error) {
 	var (
 		domain  = TelegramServiceSandboxDomain
 		urlPath string
@@ -110,21 +113,34 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (string, e
 
 	u, err := url.Parse(domain)
 	u.Path = urlPath
-	return u.String(), err
+	return u, err
 }
 
 func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (gomerchant.Params, error) {
 	if client, err := paygent.Client(); err == nil {
 		if serviceURL, err := paygent.serviceURLOfTelegramKind(telegramKind); err == nil {
-			var urlValues url.Values
+			urlValues := url.Values{}
+			urlValues.Add("merchant_id", paygent.Config.MerchantID)
+			urlValues.Add("connect_id", paygent.Config.ConnectID)
+			urlValues.Add("connect_password", paygent.Config.ConnectPassword)
+			urlValues.Add("telegram_version", paygent.Config.TelegramVersion)
+			urlValues.Add("telegram_kind", telegramKind)
+
 			for key, value := range params {
 				urlValues.Add(key, fmt.Sprint(value))
 			}
-			response, err := client.PostForm(serviceURL, urlValues)
-			if err == nil && response.StatusCode == 200 {
-				var bodyBytes []byte
-				response.Body.Read(bodyBytes)
-				fmt.Println(string(bodyBytes))
+
+			serviceURL.RawQuery = urlValues.Encode()
+			response, err := client.PostForm(serviceURL.String(), url.Values{})
+
+			if err == nil {
+				if response.StatusCode == 200 {
+					var bodyBytes []byte
+					response.Body.Read(bodyBytes)
+					fmt.Println(string(bodyBytes))
+				} else {
+					err = fmt.Errorf("status code: %v", response.StatusCode)
+				}
 			}
 			return gomerchant.Params{}, err
 		} else {
