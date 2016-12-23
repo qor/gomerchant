@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/qor/gomerchant"
@@ -124,10 +125,13 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL,
 	return u, err
 }
 
+var ResponseParser = regexp.MustCompile(`(?m)(\w+?)=(.*?)\r\n`)
+
 func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (gomerchant.Params, error) {
 	var (
 		serviceURL  *url.URL
 		urlValues   = url.Values{}
+		results     = gomerchant.Params{}
 		client, err = paygent.Client()
 	)
 
@@ -153,7 +157,10 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 					var bodyBytes []byte
 					bodyBytes, err = ioutil.ReadAll(response.Body)
 					if err == nil {
-						fmt.Println(string(bodyBytes))
+						for _, value := range ResponseParser.FindAllStringSubmatch(string(bodyBytes), -1) {
+							results.Set(value[1], value[2])
+						}
+						return results, nil
 					}
 				}
 				err = fmt.Errorf("status code: %v", response.StatusCode)
@@ -161,7 +168,7 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 		}
 	}
 
-	return gomerchant.Params{}, err
+	return results, err
 }
 
 func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gomerchant.PurchaseResponse, error) {

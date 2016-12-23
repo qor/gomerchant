@@ -12,9 +12,5 @@ func (params Params) Get(key string) (interface{}, bool) {
 }
 
 func (params Params) Set(key string, value interface{}) {
-	if params == nil {
-		params = map[string]interface{}{}
-	}
-
 	params[key] = value
 }
