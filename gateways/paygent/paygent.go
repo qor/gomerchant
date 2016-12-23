@@ -115,6 +115,7 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL,
 	for i := 0; i < len(telegramKind)-1; i++ {
 		if p, ok := TelegramServiceURLs[telegramKind[0:len(telegramKind)-i]]; ok {
 			urlPath = p
+			break
 		}
 	}
 
@@ -137,11 +138,7 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 				urlValues.Add(key, fmt.Sprint(value))
 			}
 
-			req, _ := http.NewRequest("POST", serviceURL.String(), strings.NewReader(urlValues.Encode()))
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			req.Header.Set("charset", "Windows-31J")
-			req.Header.Set("User-Agent", "curl_php")
-			response, err := client.Do(req)
+			response, err := client.Post(serviceURL.String(), "application/x-www-form-urlencoded", strings.NewReader(urlValues.Encode()))
 
 			if err == nil {
 				if response.StatusCode == 200 {
