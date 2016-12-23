@@ -125,9 +125,16 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL,
 }
 
 func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (gomerchant.Params, error) {
-	if client, err := paygent.Client(); err == nil {
-		if serviceURL, err := paygent.serviceURLOfTelegramKind(telegramKind); err == nil {
-			urlValues := url.Values{}
+	var (
+		serviceURL  *url.URL
+		urlValues   = url.Values{}
+		client, err = paygent.Client()
+	)
+
+	if err == nil {
+		serviceURL, err = paygent.serviceURLOfTelegramKind(telegramKind)
+
+		if err == nil {
 			urlValues.Add("merchant_id", paygent.Config.MerchantID)
 			urlValues.Add("connect_id", paygent.Config.ConnectID)
 			urlValues.Add("connect_password", paygent.Config.ConnectPassword)
@@ -142,20 +149,19 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 
 			if err == nil {
 				if response.StatusCode == 200 {
+					defer response.Body.Close()
 					var bodyBytes []byte
-					response.Body.Read(bodyBytes)
-					fmt.Println(string(bodyBytes))
-				} else {
-					err = fmt.Errorf("status code: %v", response.StatusCode)
+					bodyBytes, err = ioutil.ReadAll(response.Body)
+					if err == nil {
+						fmt.Println(string(bodyBytes))
+					}
 				}
+				err = fmt.Errorf("status code: %v", response.StatusCode)
 			}
-			return gomerchant.Params{}, err
-		} else {
-			return gomerchant.Params{}, err
 		}
-	} else {
-		return gomerchant.Params{}, err
 	}
+
+	return gomerchant.Params{}, err
 }
 
 func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gomerchant.PurchaseResponse, error) {
