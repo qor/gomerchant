@@ -175,8 +175,24 @@ func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gome
 	return gomerchant.PurchaseResponse{}, nil
 }
 
-func (*Paygent) Authorize(amount uint64, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
-	return gomerchant.AuthorizeResponse{}, nil
+func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
+	requestParams := gomerchant.Params{
+		"payment_id":     params.OrderID,
+		"payment_amount": amount,
+		"payment_class":  10,
+	}
+
+	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
+		if creditCard := paymentMethod.CreditCard; creditCard != nil {
+			requestParams["card_number"] = creditCard.Number
+			requestParams["card_valid_term"] = fmt.Sprintf("%02d", creditCard.ExpMonth) + fmt.Sprint(creditCard.ExpYear)[len(fmt.Sprint(creditCard.ExpYear))-2:]
+			requestParams["3dsecure_ryaku"] = 1
+		}
+	}
+
+	results, err := paygent.Request("020", requestParams)
+	fmt.Println(results)
+	return gomerchant.AuthorizeResponse{}, err
 }
 
 func (*Paygent) Capture(transactionID string, params *gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {

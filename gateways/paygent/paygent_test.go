@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jinzhu/configor"
 	"github.com/qor/gomerchant"
@@ -47,7 +48,18 @@ func init() {
 	})
 }
 
-func TestPurchase(t *testing.T) {
-	Paygent.Request("094", nil)
-	Paygent.Authorize(100, &gomerchant.AuthorizeParams{})
+func TestAuthorize(t *testing.T) {
+	Paygent.Authorize(100, &gomerchant.AuthorizeParams{
+		Currency: "JPY",
+		OrderID:  fmt.Sprint(time.Now().Unix()),
+		PaymentMethod: &gomerchant.PaymentMethod{
+			CreditCard: &gomerchant.CreditCard{
+				Name:     "JCB Card",
+				Number:   "3580876521284076",
+				ExpMonth: 1,
+				ExpYear:  uint(time.Now().Year() + 1),
+				CVC:      "111",
+			},
+		},
+	})
 }
