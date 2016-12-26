@@ -185,7 +185,7 @@ func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizePar
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
 		if creditCard := paymentMethod.CreditCard; creditCard != nil {
 			requestParams["card_number"] = creditCard.Number
-			requestParams["card_valid_term"] = fmt.Sprintf("%02d", creditCard.ExpMonth) + fmt.Sprint(creditCard.ExpYear)[len(fmt.Sprint(creditCard.ExpYear))-2:]
+			requestParams["card_valid_term"] = getValidTerm(creditCard)
 			requestParams["3dsecure_ryaku"] = 1
 		}
 	}

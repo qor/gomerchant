@@ -1,59 +1,77 @@
 package gomerchant
 
-import (
-	"log"
-	"os"
-)
-
-type Gomerchant struct {
-	PaymentGateway PaymentGateway
-	Config         *Config
+// PaymentGateway interface
+type PaymentGateway interface {
+	Purchase(amount uint64, params *PurchaseParams) (PurchaseResponse, error)
+	Authorize(amount uint64, params *AuthorizeParams) (AuthorizeResponse, error)
+	Capture(transactionID string, params *CaptureParams) (CaptureResponse, error)
+	Refund(transactionID string, params *RefundParams) (RefundResponse, error)
+	Void(transactionID string, params *VoidParams) (VoidResponse, error)
 }
 
-type Config struct {
-	Logger Logger
+// Purchase Params
+type PurchaseParams struct {
+	Amount          uint64
+	Currency        string
+	Customer        string
+	Description     string
+	OrderID         string
+	BillingAddress  *Address
+	ShippingAddress *Address
+	PaymentMethod   *PaymentMethod
+	Params
 }
 
-type Logger interface {
-	Print(values ...interface{})
+type PurchaseResponse struct {
+	TransactionID string
+	Params
 }
 
-func New(paymentGateway PaymentGateway, config *Config) *Gomerchant {
-	if config.Logger == nil {
-		config.Logger = log.New(os.Stdout, "\r\n", 0)
-	}
-
-	return &Gomerchant{PaymentGateway: paymentGateway, Config: config}
+// Authorize Params
+type AuthorizeParams struct {
+	Amount          uint64
+	Currency        string
+	Customer        string
+	Description     string
+	OrderID         string
+	BillingAddress  *Address
+	ShippingAddress *Address
+	PaymentMethod   *PaymentMethod
+	Params
 }
 
-// TBD: logger, common error validations...
-
-func (gomerchant *Gomerchant) Purchase(amount uint64, pm *PaymentMethod, params *PurchaseParams) (PurchaseResponse, error) {
-	response, err := gomerchant.Purchase(amount, pm, params)
-	gomerchant.Config.Logger.Print("Purchase", pm, params, response, err)
-	return response, err
+type AuthorizeResponse struct {
+	TransactionID string
+	Params
 }
 
-func (gomerchant *Gomerchant) Authorize(amount uint64, pm *PaymentMethod, params *AuthorizeParams) (AuthorizeResponse, error) {
-	response, err := gomerchant.Authorize(amount, pm, params)
-	gomerchant.Config.Logger.Print("Authorize", pm, params, response, err)
-	return response, err
+// Capture Params
+type CaptureParams struct {
+	Amount uint64
+	Params
 }
 
-func (gomerchant *Gomerchant) Capture(transactionID string, params *CaptureParams) (CaptureResponse, error) {
-	response, err := gomerchant.Capture(transactionID, params)
-	gomerchant.Config.Logger.Print("Capture", transactionID, response, err)
-	return response, err
+type CaptureResponse struct {
+	TransactionID string
+	Params
 }
 
-func (gomerchant *Gomerchant) Refund(transactionID string, params *RefundParams) (RefundResponse, error) {
-	response, err := gomerchant.Refund(transactionID, params)
-	gomerchant.Config.Logger.Print("Refund", transactionID, params, response, err)
-	return response, err
+// Refund Params
+type RefundParams struct {
+	Params
 }
 
-func (gomerchant *Gomerchant) Void(transactionID string, params *VoidParams) (VoidResponse, error) {
-	response, err := gomerchant.Void(transactionID, params)
-	gomerchant.Config.Logger.Print("Void", transactionID, params, response, err)
-	return response, err
+type RefundResponse struct {
+	TransactionID string
+	Params
+}
+
+// Void Params
+type VoidParams struct {
+	Params
+}
+
+type VoidResponse struct {
+	TransactionID string
+	Params
 }
