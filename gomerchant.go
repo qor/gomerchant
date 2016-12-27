@@ -75,3 +75,13 @@ type VoidResponse struct {
 	TransactionID string
 	Params
 }
+
+// CreateCreditCard Params
+type CreateCreditCardParams struct {
+	CustomerID string
+	CreditCard *CreditCard
+}
+
+type CreditCardParamsResponse struct {
+	Params
+}

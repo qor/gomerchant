@@ -1,6 +1,7 @@
 package paygent
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -12,6 +13,9 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/transform"
 
 	"github.com/qor/gomerchant"
 )
@@ -156,8 +160,12 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 					defer response.Body.Close()
 					var bodyBytes []byte
 					bodyBytes, err = ioutil.ReadAll(response.Body)
+
+					shiftJISToUTF8 := transform.NewReader(bytes.NewReader(bodyBytes), japanese.ShiftJIS.NewDecoder())
+					utf8Bytes, _ := ioutil.ReadAll(shiftJISToUTF8)
+
 					if err == nil {
-						for _, value := range ResponseParser.FindAllStringSubmatch(string(bodyBytes), -1) {
+						for _, value := range ResponseParser.FindAllStringSubmatch(string(utf8Bytes), -1) {
 							results.Set(value[1], value[2])
 						}
 						return results, nil
