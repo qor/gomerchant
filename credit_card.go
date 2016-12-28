@@ -17,9 +17,9 @@ var Issuers = map[string]*regexp.Regexp{
 	`laser`:              regexp.MustCompile(`^(6304|6706|6771|6709)\d{8}(\d{4}|\d{6,7})?$`),
 }
 
-type PaymentMethod struct {
-	Token      string
-	CreditCard *CreditCard
+type SavedCreditCard struct {
+	CustomerID   string
+	CreditCardID string
 }
 
 type CreditCard struct {

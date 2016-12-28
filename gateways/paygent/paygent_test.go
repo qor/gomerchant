@@ -48,8 +48,8 @@ func init() {
 	})
 }
 
-func TestCreateCreditCard(t *testing.T) {
-	if result, err := Paygent.CreateCreditCard(&gomerchant.CreateCreditCardParams{
+func createSavedCreditCard() (gomerchant.CreditCardParamsResponse, error) {
+	return Paygent.CreateCreditCard(&gomerchant.CreateCreditCardParams{
 		CustomerID: fmt.Sprint(time.Now().Unix()),
 		CreditCard: &gomerchant.CreditCard{
 			Name:     "JCB Card",
@@ -57,13 +57,17 @@ func TestCreateCreditCard(t *testing.T) {
 			ExpMonth: 1,
 			ExpYear:  uint(time.Now().Year() + 1),
 		},
-	}); err != nil || result.CardID == "" {
+	})
+}
+
+func TestCreateCreditCard(t *testing.T) {
+	if result, err := createSavedCreditCard(); err != nil || result.CreditCardID == "" {
 		t.Error(err, result)
 	}
 }
 
-func TestAuthorize(t *testing.T) {
-	if result, err := Paygent.Authorize(100, &gomerchant.AuthorizeParams{
+func TestAuthorizeAndCapture(t *testing.T) {
+	authorizeResult, err := Paygent.Authorize(100, &gomerchant.AuthorizeParams{
 		Currency: "JPY",
 		OrderID:  fmt.Sprint(time.Now().Unix()),
 		PaymentMethod: &gomerchant.PaymentMethod{
@@ -74,7 +78,40 @@ func TestAuthorize(t *testing.T) {
 				ExpYear:  uint(time.Now().Year() + 1),
 			},
 		},
-	}); err != nil || result.TransactionID == "" {
-		t.Error(err, result)
+	})
+
+	if err != nil || authorizeResult.TransactionID == "" {
+		t.Error(err, authorizeResult)
+	}
+
+	captureResult, err := Paygent.Capture(authorizeResult.TransactionID, &gomerchant.CaptureParams{})
+
+	if err != nil || captureResult.TransactionID == "" {
+		t.Error(err, captureResult)
+	}
+}
+
+func TestAuthorizeAndCaptureWithSavedCreditCard(t *testing.T) {
+	if savedCreditCard, err := createSavedCreditCard(); err == nil {
+		authorizeResult, err := Paygent.Authorize(100, &gomerchant.AuthorizeParams{
+			Currency: "JPY",
+			OrderID:  fmt.Sprint(time.Now().Unix()),
+			PaymentMethod: &gomerchant.PaymentMethod{
+				SavedCreditCard: &gomerchant.SavedCreditCard{
+					CustomerID:   savedCreditCard.CustomerID,
+					CreditCardID: savedCreditCard.CreditCardID,
+				},
+			},
+		})
+
+		if err != nil || authorizeResult.TransactionID == "" {
+			t.Error(err, authorizeResult)
+		}
+
+		captureResult, err := Paygent.Capture(authorizeResult.TransactionID, &gomerchant.CaptureParams{})
+
+		if err != nil || captureResult.TransactionID == "" {
+			t.Error(err, captureResult)
+		}
 	}
 }

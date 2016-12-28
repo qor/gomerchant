@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -131,11 +132,18 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL,
 
 var ResponseParser = regexp.MustCompile(`(?m)(\w+?)=(.*?)(\r\n|$)`)
 
-func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (gomerchant.Params, error) {
+type Response struct {
+	Result         string
+	ResponseCode   string
+	ResponseDetail string
+	gomerchant.Params
+}
+
+func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (Response, error) {
 	var (
 		serviceURL  *url.URL
 		urlValues   = url.Values{}
-		results     = gomerchant.Params{}
+		results     = Response{Params: gomerchant.Params{}}
 		client, err = paygent.Client()
 	)
 
@@ -166,9 +174,30 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 
 					if err == nil {
 						for _, value := range ResponseParser.FindAllStringSubmatch(string(utf8Bytes), -1) {
+							if value[1] == "result" {
+								results.Result = value[2]
+							}
+
+							if value[1] == "response_code" {
+								results.ResponseCode = value[2]
+							}
+
+							if value[1] == "response_detail" {
+								results.ResponseDetail = value[2]
+							}
+
 							results.Set(value[1], value[2])
 						}
-						return results, nil
+
+						if results.Result != "0" {
+							if results.ResponseDetail != "" {
+								err = errors.New(results.ResponseDetail)
+							} else {
+								err = errors.New("failed to process this request")
+							}
+						}
+
+						return results, err
 					}
 				}
 				err = fmt.Errorf("status code: %v", response.StatusCode)
@@ -194,11 +223,20 @@ func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizePar
 	)
 
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
-		if creditCard := paymentMethod.CreditCard; creditCard != nil {
+		if savedCreditCard := paymentMethod.SavedCreditCard; savedCreditCard != nil {
+			requestParams["stock_card_mode"] = 1
+			requestParams["customer_id"] = savedCreditCard.CustomerID
+			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
+			requestParams["3dsecure_ryaku"] = 1
+		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
 			requestParams["card_number"] = creditCard.Number
 			requestParams["card_valid_term"] = getValidTerm(creditCard)
 			requestParams["3dsecure_ryaku"] = 1
+		} else {
+			return response, gomerchant.ErrNotSupportedPaymentMethod
 		}
+	} else {
+		return response, gomerchant.ErrNotSupportedPaymentMethod
 	}
 
 	results, err := paygent.Request("020", requestParams)
@@ -207,13 +245,27 @@ func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizePar
 			response.TransactionID = fmt.Sprint(paymentID)
 		}
 	}
-	response.Params = results
+	response.Params = results.Params
 
 	return response, err
 }
 
-func (*Paygent) Capture(transactionID string, params *gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {
-	return gomerchant.CaptureResponse{}, nil
+func (paygent *Paygent) Capture(transactionID string, params *gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {
+	var (
+		response      gomerchant.CaptureResponse
+		requestParams = gomerchant.Params{"payment_id": transactionID}
+	)
+
+	results, err := paygent.Request("022", requestParams)
+
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+
+	return response, err
 }
 
 func (*Paygent) Refund(transactionID string, params *gomerchant.RefundParams) (gomerchant.RefundResponse, error) {

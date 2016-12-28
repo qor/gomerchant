@@ -14,7 +14,7 @@ var issuersMap = map[string]string{"visa": "V", "master": "M", "american_express
 
 func (paygent *Paygent) CreateCreditCard(creditCardParams *gomerchant.CreateCreditCardParams) (gomerchant.CreditCardParamsResponse, error) {
 	var (
-		response   gomerchant.CreditCardParamsResponse
+		response   = gomerchant.CreditCardParamsResponse{CustomerID: creditCardParams.CustomerID}
 		creditCard = creditCardParams.CreditCard
 		issuer, _  = issuersMap[creditCard.Issuer()]
 	)
@@ -29,9 +29,10 @@ func (paygent *Paygent) CreateCreditCard(creditCardParams *gomerchant.CreateCred
 
 	if err == nil {
 		if customerCardID, ok := results.Get("customer_card_id"); ok {
-			response.CardID = fmt.Sprint(customerCardID)
+			response.CreditCardID = fmt.Sprint(customerCardID)
 		}
 	}
+	response.Params = results.Params
 
 	return response, err
 }

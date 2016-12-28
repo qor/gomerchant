@@ -47,7 +47,6 @@ type AuthorizeResponse struct {
 
 // Capture Params
 type CaptureParams struct {
-	Amount uint64
 	Params
 }
 
@@ -83,6 +82,7 @@ type CreateCreditCardParams struct {
 }
 
 type CreditCardParamsResponse struct {
-	CardID string
+	CustomerID   string
+	CreditCardID string
 	Params
 }
