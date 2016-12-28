@@ -185,7 +185,7 @@ func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gome
 
 func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
 	requestParams := gomerchant.Params{
-		"payment_id":     params.OrderID,
+		"trading_id":     params.OrderID,
 		"payment_amount": amount,
 		"payment_class":  10,
 	}

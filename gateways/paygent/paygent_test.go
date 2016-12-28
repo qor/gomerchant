@@ -72,7 +72,6 @@ func TestAuthorize(t *testing.T) {
 				Number:   "3580876521284076",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
-				CVC:      "111",
 			},
 		},
 	})
