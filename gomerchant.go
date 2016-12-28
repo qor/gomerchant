@@ -2,29 +2,10 @@ package gomerchant
 
 // PaymentGateway interface
 type PaymentGateway interface {
-	Purchase(amount uint64, params *PurchaseParams) (PurchaseResponse, error)
 	Authorize(amount uint64, params *AuthorizeParams) (AuthorizeResponse, error)
 	Capture(transactionID string, params *CaptureParams) (CaptureResponse, error)
 	Refund(transactionID string, params *RefundParams) (RefundResponse, error)
 	Void(transactionID string, params *VoidParams) (VoidResponse, error)
-}
-
-// Purchase Params
-type PurchaseParams struct {
-	Amount          uint64
-	Currency        string
-	Customer        string
-	Description     string
-	OrderID         string
-	BillingAddress  *Address
-	ShippingAddress *Address
-	PaymentMethod   *PaymentMethod
-	Params
-}
-
-type PurchaseResponse struct {
-	TransactionID string
-	Params
 }
 
 // Authorize Params

@@ -208,10 +208,6 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 	return results, err
 }
 
-func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gomerchant.PurchaseResponse, error) {
-	return gomerchant.PurchaseResponse{}, nil
-}
-
 func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
 	var (
 		response      gomerchant.AuthorizeResponse
