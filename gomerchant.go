@@ -83,5 +83,6 @@ type CreateCreditCardParams struct {
 }
 
 type CreditCardParamsResponse struct {
+	CardID string
 	Params
 }

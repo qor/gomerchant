@@ -57,13 +57,13 @@ func TestCreateCreditCard(t *testing.T) {
 			ExpMonth: 1,
 			ExpYear:  uint(time.Now().Year() + 1),
 		},
-	}); err != nil {
+	}); err != nil || result.CardID == "" {
 		t.Error(err, result)
 	}
 }
 
 func TestAuthorize(t *testing.T) {
-	Paygent.Authorize(100, &gomerchant.AuthorizeParams{
+	if result, err := Paygent.Authorize(100, &gomerchant.AuthorizeParams{
 		Currency: "JPY",
 		OrderID:  fmt.Sprint(time.Now().Unix()),
 		PaymentMethod: &gomerchant.PaymentMethod{
@@ -74,5 +74,7 @@ func TestAuthorize(t *testing.T) {
 				ExpYear:  uint(time.Now().Year() + 1),
 			},
 		},
-	})
+	}); err != nil || result.TransactionID == "" {
+		t.Error(err, result)
+	}
 }

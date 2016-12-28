@@ -12,17 +12,26 @@ func getValidTerm(creditCard *gomerchant.CreditCard) string {
 
 var issuersMap = map[string]string{"visa": "V", "master": "M", "american_express": "X", "diners_club": "C", "jcb": "J"}
 
-func (paygent *Paygent) CreateCreditCard(creditCardParams *gomerchant.CreateCreditCardParams) (gomerchant.Params, error) {
+func (paygent *Paygent) CreateCreditCard(creditCardParams *gomerchant.CreateCreditCardParams) (gomerchant.CreditCardParamsResponse, error) {
 	var (
+		response   gomerchant.CreditCardParamsResponse
 		creditCard = creditCardParams.CreditCard
 		issuer, _  = issuersMap[creditCard.Issuer()]
 	)
 
-	return paygent.Request("025", gomerchant.Params{
+	results, err := paygent.Request("025", gomerchant.Params{
 		"customer_id":     creditCardParams.CustomerID,
 		"card_number":     creditCard.Number,
 		"card_valid_term": getValidTerm(creditCard),
 		"cardholder_name": creditCard.Name,
 		"card_brand":      issuer,
 	}.IgnoreBlankFields())
+
+	if err == nil {
+		if customerCardID, ok := results.Get("customer_card_id"); ok {
+			response.CardID = fmt.Sprint(customerCardID)
+		}
+	}
+
+	return response, err
 }

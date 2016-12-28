@@ -129,7 +129,7 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL,
 	return u, err
 }
 
-var ResponseParser = regexp.MustCompile(`(?m)(\w+?)=(.*?)\r\n`)
+var ResponseParser = regexp.MustCompile(`(?m)(\w+?)=(.*?)(\r\n|$)`)
 
 func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (gomerchant.Params, error) {
 	var (
@@ -184,11 +184,14 @@ func (*Paygent) Purchase(amount uint64, params *gomerchant.PurchaseParams) (gome
 }
 
 func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
-	requestParams := gomerchant.Params{
-		"trading_id":     params.OrderID,
-		"payment_amount": amount,
-		"payment_class":  10,
-	}
+	var (
+		response      gomerchant.AuthorizeResponse
+		requestParams = gomerchant.Params{
+			"trading_id":     params.OrderID,
+			"payment_amount": amount,
+			"payment_class":  10,
+		}
+	)
 
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
 		if creditCard := paymentMethod.CreditCard; creditCard != nil {
@@ -199,8 +202,14 @@ func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizePar
 	}
 
 	results, err := paygent.Request("020", requestParams)
-	fmt.Println(results)
-	return gomerchant.AuthorizeResponse{}, err
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results
+
+	return response, err
 }
 
 func (*Paygent) Capture(transactionID string, params *gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {
