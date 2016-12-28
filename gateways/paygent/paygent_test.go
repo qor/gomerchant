@@ -115,3 +115,37 @@ func TestAuthorizeAndCaptureWithSavedCreditCard(t *testing.T) {
 		}
 	}
 }
+
+func Test3DAuthorizeAndCapture(t *testing.T) {
+	authorizeResult, err := Paygent.Authorize(100, &gomerchant.AuthorizeParams{
+		Currency: "JPY",
+		OrderID:  fmt.Sprint(time.Now().Unix()),
+		PaymentMethod: &gomerchant.PaymentMethod{
+			CreditCard: &gomerchant.CreditCard{
+				Name:     "JCB Card",
+				Number:   "3580876521284076",
+				ExpMonth: 1,
+				ExpYear:  uint(time.Now().Year() + 1),
+			},
+		},
+		Params: gomerchant.Params{
+			"3DMode": true,
+			"3DParams": paygent.ThreeDomainSecureParams{
+				UserAgent:  "curl",
+				TermURL:    "http://example.org/order/return",
+				HttpAccept: "http",
+			},
+		},
+	})
+
+	fmt.Println(authorizeResult)
+	if err != nil || authorizeResult.TransactionID == "" {
+		t.Error(err, authorizeResult)
+	}
+
+	captureResult, err := Paygent.Capture(authorizeResult.TransactionID, &gomerchant.CaptureParams{})
+
+	if err != nil || captureResult.TransactionID == "" {
+		t.Error(err, captureResult)
+	}
+}

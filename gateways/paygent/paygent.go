@@ -218,16 +218,22 @@ func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizePar
 		}
 	)
 
+	if ok, threeDomainParams := get3DModeParams(params); ok {
+		requestParams["http_user_agent"] = threeDomainParams.UserAgent
+		requestParams["term_url"] = threeDomainParams.TermURL
+		requestParams["http_accept"] = threeDomainParams.HttpAccept
+	} else {
+		requestParams["3dsecure_ryaku"] = 1
+	}
+
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
 		if savedCreditCard := paymentMethod.SavedCreditCard; savedCreditCard != nil {
 			requestParams["stock_card_mode"] = 1
 			requestParams["customer_id"] = savedCreditCard.CustomerID
 			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
-			requestParams["3dsecure_ryaku"] = 1
 		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
 			requestParams["card_number"] = creditCard.Number
 			requestParams["card_valid_term"] = getValidTerm(creditCard)
-			requestParams["3dsecure_ryaku"] = 1
 		} else {
 			return response, gomerchant.ErrNotSupportedPaymentMethod
 		}
