@@ -17,6 +17,7 @@ func (paygent *Paygent) CreateCreditCard(creditCardParams *gomerchant.CreateCred
 		"card_number":     creditCard.Number,
 		"card_valid_term": getValidTerm(creditCard),
 		"cardholder_name": creditCard.Name,
+		"card_brand":      creditCard.Issuer(),
 		"card_token":      creditCard.CVC,
 	}.IgnoreBlankFields())
 }
