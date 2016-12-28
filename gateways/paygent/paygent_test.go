@@ -49,19 +49,17 @@ func init() {
 }
 
 func TestCreateCreditCard(t *testing.T) {
-	result, err := Paygent.CreateCreditCard(&gomerchant.CreateCreditCardParams{
+	if result, err := Paygent.CreateCreditCard(&gomerchant.CreateCreditCardParams{
 		CustomerID: fmt.Sprint(time.Now().Unix()),
 		CreditCard: &gomerchant.CreditCard{
 			Name:     "JCB Card",
 			Number:   "3580876521284076",
 			ExpMonth: 1,
 			ExpYear:  uint(time.Now().Year() + 1),
-			CVC:      "111",
 		},
-	})
-
-	fmt.Println(result)
-	fmt.Println(err)
+	}); err != nil {
+		t.Error(err, result)
+	}
 }
 
 func TestAuthorize(t *testing.T) {
