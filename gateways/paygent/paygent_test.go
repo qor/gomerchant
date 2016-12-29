@@ -123,7 +123,7 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 		PaymentMethod: &gomerchant.PaymentMethod{
 			CreditCard: &gomerchant.CreditCard{
 				Name:     "JCB Card",
-				Number:   "3580876521284076",
+				Number:   "5123459358515820",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
 			},
@@ -131,8 +131,8 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 		Params: gomerchant.Params{
 			"3DMode": true,
 			"3DParams": paygent.ThreeDomainSecureParams{
-				UserAgent:  "curl",
-				TermURL:    "http://example.org/order/return",
+				UserAgent: "User-Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.3.12 (KHTML, like Gecko) Version/10.0.2 Safari/602.3.12",
+				TermURL:    "http://dev.lacoste.co.jp/order/return",
 				HttpAccept: "http",
 			},
 		},

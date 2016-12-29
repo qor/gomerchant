@@ -130,7 +130,7 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL,
 	return u, err
 }
 
-var ResponseParser = regexp.MustCompile(`(?m)(\w+?)=(.*?)(\r\n|$)`)
+var ResponseParser = regexp.MustCompile(`(?s)(\w+?)=(<!DOCTYPE.*HTML>|.*?)\r\n`)
 
 type Response struct {
 	Result         string
@@ -189,7 +189,7 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 							results.Set(value[1], value[2])
 						}
 
-						if results.Result != "0" {
+						if results.Result == "1" {
 							if results.ResponseDetail != "" {
 								err = errors.New(results.ResponseDetail)
 							} else {
