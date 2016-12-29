@@ -49,7 +49,7 @@ func init() {
 }
 
 func createSavedCreditCard() (gomerchant.CreditCardParamsResponse, error) {
-	return Paygent.CreateCreditCard(&gomerchant.CreateCreditCardParams{
+	return Paygent.CreateCreditCard(gomerchant.CreateCreditCardParams{
 		CustomerID: fmt.Sprint(time.Now().Unix()),
 		CreditCard: &gomerchant.CreditCard{
 			Name:     "JCB Card",
@@ -67,7 +67,7 @@ func TestCreateCreditCard(t *testing.T) {
 }
 
 func TestAuthorizeAndCapture(t *testing.T) {
-	authorizeResult, err := Paygent.Authorize(100, &gomerchant.AuthorizeParams{
+	authorizeResult, err := Paygent.Authorize(100, gomerchant.AuthorizeParams{
 		Currency: "JPY",
 		OrderID:  fmt.Sprint(time.Now().Unix()),
 		PaymentMethod: &gomerchant.PaymentMethod{
@@ -84,7 +84,7 @@ func TestAuthorizeAndCapture(t *testing.T) {
 		t.Error(err, authorizeResult)
 	}
 
-	captureResult, err := Paygent.Capture(authorizeResult.TransactionID, &gomerchant.CaptureParams{})
+	captureResult, err := Paygent.Capture(authorizeResult.TransactionID, gomerchant.CaptureParams{})
 
 	if err != nil || captureResult.TransactionID == "" {
 		t.Error(err, captureResult)
@@ -93,7 +93,7 @@ func TestAuthorizeAndCapture(t *testing.T) {
 
 func TestAuthorizeAndCaptureWithSavedCreditCard(t *testing.T) {
 	if savedCreditCard, err := createSavedCreditCard(); err == nil {
-		authorizeResult, err := Paygent.Authorize(100, &gomerchant.AuthorizeParams{
+		authorizeResult, err := Paygent.Authorize(100, gomerchant.AuthorizeParams{
 			Currency: "JPY",
 			OrderID:  fmt.Sprint(time.Now().Unix()),
 			PaymentMethod: &gomerchant.PaymentMethod{
@@ -108,7 +108,7 @@ func TestAuthorizeAndCaptureWithSavedCreditCard(t *testing.T) {
 			t.Error(err, authorizeResult)
 		}
 
-		captureResult, err := Paygent.Capture(authorizeResult.TransactionID, &gomerchant.CaptureParams{})
+		captureResult, err := Paygent.Capture(authorizeResult.TransactionID, gomerchant.CaptureParams{})
 
 		if err != nil || captureResult.TransactionID == "" {
 			t.Error(err, captureResult)
@@ -117,26 +117,24 @@ func TestAuthorizeAndCaptureWithSavedCreditCard(t *testing.T) {
 }
 
 func Test3DAuthorizeAndCapture(t *testing.T) {
-	authorizeResult, err := Paygent.Authorize(100, &gomerchant.AuthorizeParams{
-		Currency: "JPY",
-		OrderID:  fmt.Sprint(time.Now().Unix()),
-		PaymentMethod: &gomerchant.PaymentMethod{
-			CreditCard: &gomerchant.CreditCard{
-				Name:     "JCB Card",
-				Number:   "5123459358515820",
-				ExpMonth: 1,
-				ExpYear:  uint(time.Now().Year() + 1),
-			},
+	authorizeResult, err := Paygent.SecureCodeAuthorize(100,
+		paygent.SecureCodeParams{
+			UserAgent: "User-Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.3.12 (KHTML, like Gecko) Version/10.0.2 Safari/602.3.12",
+			TermURL:    "http://dev.lacoste.co.jp/order/return",
+			HttpAccept: "http",
 		},
-		Params: gomerchant.Params{
-			"3DMode": true,
-			"3DParams": paygent.ThreeDomainSecureParams{
-				UserAgent: "User-Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.3.12 (KHTML, like Gecko) Version/10.0.2 Safari/602.3.12",
-				TermURL:    "http://dev.lacoste.co.jp/order/return",
-				HttpAccept: "http",
+		gomerchant.AuthorizeParams{
+			Currency: "JPY",
+			OrderID:  fmt.Sprint(time.Now().Unix()),
+			PaymentMethod: &gomerchant.PaymentMethod{
+				CreditCard: &gomerchant.CreditCard{
+					Name:     "JCB Card",
+					Number:   "5123459358515820",
+					ExpMonth: 1,
+					ExpYear:  uint(time.Now().Year() + 1),
+				},
 			},
-		},
-	})
+		})
 
 	if err != nil || authorizeResult.TransactionID == "" {
 		t.Error(err, authorizeResult)

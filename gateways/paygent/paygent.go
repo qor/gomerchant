@@ -208,7 +208,7 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 	return results, err
 }
 
-func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
+func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
 	var (
 		response      gomerchant.AuthorizeResponse
 		requestParams = gomerchant.Params{
@@ -252,7 +252,7 @@ func (paygent *Paygent) Authorize(amount uint64, params *gomerchant.AuthorizePar
 	return response, err
 }
 
-func (paygent *Paygent) Capture(transactionID string, params *gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {
+func (paygent *Paygent) Capture(transactionID string, params gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {
 	var (
 		response      gomerchant.CaptureResponse
 		requestParams = gomerchant.Params{"payment_id": transactionID}
@@ -270,10 +270,10 @@ func (paygent *Paygent) Capture(transactionID string, params *gomerchant.Capture
 	return response, err
 }
 
-func (*Paygent) Refund(transactionID string, params *gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
+func (*Paygent) Refund(transactionID string, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
 	return gomerchant.RefundResponse{}, nil
 }
 
-func (*Paygent) Void(transactionID string, params *gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
+func (*Paygent) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
 	return gomerchant.VoidResponse{}, nil
 }

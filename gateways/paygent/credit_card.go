@@ -12,7 +12,7 @@ func getValidTerm(creditCard *gomerchant.CreditCard) string {
 
 var issuersMap = map[string]string{"visa": "V", "master": "M", "american_express": "X", "diners_club": "C", "jcb": "J"}
 
-func (paygent *Paygent) CreateCreditCard(creditCardParams *gomerchant.CreateCreditCardParams) (gomerchant.CreditCardParamsResponse, error) {
+func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCreditCardParams) (gomerchant.CreditCardParamsResponse, error) {
 	var (
 		response   = gomerchant.CreditCardParamsResponse{CustomerID: creditCardParams.CustomerID}
 		creditCard = creditCardParams.CreditCard

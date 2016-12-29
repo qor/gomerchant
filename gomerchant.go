@@ -2,10 +2,10 @@ package gomerchant
 
 // PaymentGateway interface
 type PaymentGateway interface {
-	Authorize(amount uint64, params *AuthorizeParams) (AuthorizeResponse, error)
-	Capture(transactionID string, params *CaptureParams) (CaptureResponse, error)
-	Refund(transactionID string, params *RefundParams) (RefundResponse, error)
-	Void(transactionID string, params *VoidParams) (VoidResponse, error)
+	Authorize(amount uint64, params AuthorizeParams) (AuthorizeResponse, error)
+	Capture(transactionID string, params CaptureParams) (CaptureResponse, error)
+	Refund(transactionID string, params RefundParams) (RefundResponse, error)
+	Void(transactionID string, params VoidParams) (VoidResponse, error)
 }
 
 // Authorize Params
