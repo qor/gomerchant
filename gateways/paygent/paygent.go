@@ -284,17 +284,9 @@ func (paygent *Paygent) Capture(transactionID string, params gomerchant.CaptureP
 	return response, err
 }
 
-// Refund if amount equal 0, then void the transaction
-func (paygent *Paygent) Refund(transactionID string, amount uint, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
-	if amount == 0 {
-		result, err := paygent.Void(transactionID, gomerchant.VoidParams{Captured: params.Captured})
-		return gomerchant.RefundResponse{TransactionID: transactionID, Params: result.Params}, err
-	}
-
+func (paygent *Paygent) Refund(transactionID string, amount uint, params gomerchant.RefundParams) (response gomerchant.RefundResponse, err error) {
 	var (
 		results       Response
-		err           error
-		response      = gomerchant.RefundResponse{TransactionID: transactionID}
 		requestParams = gomerchant.Params{
 			"payment_id":     transactionID,
 			"payment_amount": amount,
@@ -309,16 +301,15 @@ func (paygent *Paygent) Refund(transactionID string, amount uint, params gomerch
 	}
 
 	response.Params = results.Params
+	if paymentID, ok := getPaymentID(results); ok {
+		response.TransactionID = paymentID
+	}
 
 	return response, err
 }
 
-func (paygent *Paygent) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
-	var (
-		results  Response
-		err      error
-		response = gomerchant.VoidResponse{TransactionID: transactionID}
-	)
+func (paygent *Paygent) Void(transactionID string, params gomerchant.VoidParams) (response gomerchant.VoidResponse, err error) {
+	var results Response
 
 	if params.Captured {
 		results, err = paygent.Request("023", gomerchant.Params{"payment_id": transactionID})
@@ -327,5 +318,13 @@ func (paygent *Paygent) Void(transactionID string, params gomerchant.VoidParams)
 	}
 
 	response.Params = results.Params
+	if paymentID, ok := getPaymentID(results); ok {
+		response.TransactionID = paymentID
+	}
+
 	return response, err
+}
+
+func (paygent *Paygent) Query(transactionID string) (Response, error) {
+	return paygent.Request("094", gomerchant.Params{"payment_id": transactionID})
 }
