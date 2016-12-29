@@ -178,6 +178,6 @@ func TestRefundAuthorizeAndCapture(t *testing.T) {
 
 	authorizeResponse := createAuth()
 	if refundResponse, err := Paygent.Refund(authorizeResponse.TransactionID, 100, gomerchant.RefundParams{}); err == nil {
-		Paygent.Query(refundResponse.TransactionID)
+		fmt.Println(Paygent.Query(refundResponse.TransactionID))
 	}
 }

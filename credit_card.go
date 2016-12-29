@@ -1,6 +1,9 @@
 package gomerchant
 
-import "regexp"
+import (
+	"regexp"
+	"strconv"
+)
 
 var Issuers = map[string]*regexp.Regexp{
 	`visa`:               regexp.MustCompile(`^4\d{12}(\d{3})?$`),
@@ -37,4 +40,39 @@ func (creditCard CreditCard) Issuer() string {
 		}
 	}
 	return ""
+}
+
+// https://en.wikipedia.org/wiki/Luhn_algorithm
+func (creditCard CreditCard) ValidNumber() bool {
+	// number length >= 12
+	if len(creditCard.Number) < 12 {
+		return false
+	}
+
+	var number int
+	if n, err := strconv.Atoi(creditCard.Number); err == nil {
+		number = n
+	} else {
+		// should be digits
+		return false
+	}
+
+	checkNumber := number % 10
+	number = number / 10
+
+	for i := 0; number > 0; i++ {
+		cur := number % 10
+
+		if i%2 == 0 { // even
+			cur = cur * 2
+			if cur > 9 {
+				cur = cur%10 + cur/10
+			}
+		}
+
+		checkNumber += cur
+		number = number / 10
+	}
+
+	return checkNumber%10 == 0
 }
