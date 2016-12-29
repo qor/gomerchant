@@ -1,6 +1,7 @@
 package paygent
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -43,7 +44,13 @@ func (paygent *Paygent) SecureCodeAuthorize(amount uint64, secureCodeParams Secu
 	return paygent.Authorize(amount, params)
 }
 
-func (paygent *Paygent) CompleteSecureCodeAuthorize(paymentID string, request *http.Request) (Response, error) {
-	request.ParseForm()
-	return paygent.Request("024", gomerchant.Params{"MD": request.Form.Get("MD"), "PaRes": request.Form.Get("PaRes")})
+func (paygent *Paygent) CompleteAuthorize(paymentID string, params gomerchant.CompleteAuthorizeParams) (gomerchant.CompleteAuthorizeResponse, error) {
+	if req, ok := params.Get("request"); ok {
+		if request, ok := req.(*http.Request); ok {
+			request.ParseForm()
+			response, err := paygent.Request("024", gomerchant.Params{"MD": request.Form.Get("MD"), "PaRes": request.Form.Get("PaRes")})
+			return gomerchant.CompleteAuthorizeResponse{Params: response.Params}, err
+		}
+	}
+	return gomerchant.CompleteAuthorizeResponse{}, errors.New("no valid request params found")
 }

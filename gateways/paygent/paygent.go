@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
@@ -130,7 +131,7 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL,
 	return u, err
 }
 
-var ResponseParser = regexp.MustCompile(`(?s)(\w+?)=(<!DOCTYPE.*HTML>|.*?)\r\n`)
+var ResponseParser = regexp.MustCompile(`(?s)(\w+?)=(<!DOCTYPE.*HTML>|.*?)(\r\n|$)`)
 
 type Response struct {
 	Result         string
@@ -246,7 +247,19 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 		if paymentID, ok := results.Get("payment_id"); ok {
 			response.TransactionID = fmt.Sprint(paymentID)
 		}
+
+		// If 3D Mode
+		if ok, _ := get3DModeParams(params); ok {
+			if result, ok := results.Get("out_acs_html"); ok && fmt.Sprint(result) != "" {
+				response.HandleRequest = true
+				response.RequestHandler = func(writer http.ResponseWriter, request *http.Request, _ gomerchant.Params) error {
+					_, e := io.WriteString(writer, fmt.Sprint(result))
+					return e
+				}
+			}
+		}
 	}
+
 	response.Params = results.Params
 
 	return response, err

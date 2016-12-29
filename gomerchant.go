@@ -1,5 +1,7 @@
 package gomerchant
 
+import "net/http"
+
 // PaymentGateway interface
 type PaymentGateway interface {
 	Authorize(amount uint64, params AuthorizeParams) (AuthorizeResponse, error)
@@ -22,7 +24,17 @@ type AuthorizeParams struct {
 }
 
 type AuthorizeResponse struct {
-	TransactionID string
+	TransactionID  string
+	HandleRequest  bool                                                   // need process request after authorize or not
+	RequestHandler func(http.ResponseWriter, *http.Request, Params) error // process request
+	Params
+}
+
+type CompleteAuthorizeParams struct {
+	Params
+}
+
+type CompleteAuthorizeResponse struct {
 	Params
 }
 
