@@ -283,10 +283,47 @@ func (paygent *Paygent) Capture(transactionID string, params gomerchant.CaptureP
 	return response, err
 }
 
-func (*Paygent) Refund(transactionID string, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
-	return gomerchant.RefundResponse{}, nil
+// Refund if amount equal 0, then void the transaction
+func (paygent *Paygent) Refund(transactionID string, amount uint, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
+	if amount == 0 {
+		result, err := paygent.Void(transactionID, gomerchant.VoidParams{Captured: params.Captured})
+		return gomerchant.RefundResponse{TransactionID: transactionID, Params: result.Params}, err
+	}
+
+	var (
+		results       Response
+		err           error
+		response      = gomerchant.RefundResponse{TransactionID: transactionID}
+		requestParams = gomerchant.Params{
+			"payment_amount": amount,
+			"reduction_flag": 1,
+		}
+	)
+
+	if params.Captured {
+		results, err = paygent.Request("023", requestParams)
+	} else {
+		results, err = paygent.Request("021", requestParams)
+	}
+
+	response.Params = results.Params
+
+	return response, err
 }
 
-func (*Paygent) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
-	return gomerchant.VoidResponse{}, nil
+func (paygent *Paygent) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
+	var (
+		results  Response
+		err      error
+		response = gomerchant.VoidResponse{TransactionID: transactionID}
+	)
+
+	if params.Captured {
+		results, err = paygent.Request("023", gomerchant.Params{"payment_id": transactionID})
+	} else {
+		results, err = paygent.Request("021", gomerchant.Params{"payment_id": transactionID})
+	}
+
+	response.Params = results.Params
+	return response, err
 }

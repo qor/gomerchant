@@ -157,3 +157,25 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 		}
 	}
 }
+
+func TestRefundAuthorizeAndCapture(t *testing.T) {
+	createAuth := func() gomerchant.AuthorizeResponse {
+		authorizeResponse, _ := Paygent.Authorize(100, gomerchant.AuthorizeParams{
+			Currency: "JPY",
+			OrderID:  fmt.Sprint(time.Now().Unix()),
+			PaymentMethod: &gomerchant.PaymentMethod{
+				CreditCard: &gomerchant.CreditCard{
+					Name:     "JCB Card",
+					Number:   "3580876521284076",
+					ExpMonth: 1,
+					ExpYear:  uint(time.Now().Year() + 1),
+				},
+			},
+		})
+
+		return authorizeResponse
+	}
+
+	authorizeResponse1 := createAuth()
+	fmt.Println(Paygent.Refund(authorizeResponse1.TransactionID, 100, gomerchant.RefundParams{}))
+}
