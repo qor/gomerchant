@@ -138,14 +138,9 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 		},
 	})
 
-	fmt.Println(authorizeResult)
 	if err != nil || authorizeResult.TransactionID == "" {
 		t.Error(err, authorizeResult)
-	}
-
-	captureResult, err := Paygent.Capture(authorizeResult.TransactionID, &gomerchant.CaptureParams{})
-
-	if err != nil || captureResult.TransactionID == "" {
-		t.Error(err, captureResult)
+	} else if result, ok := authorizeResult.Get("out_acs_html"); !ok || result.(string) == "" {
+		t.Errorf("should get HTML, but %v", authorizeResult)
 	}
 }
