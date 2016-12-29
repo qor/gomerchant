@@ -160,7 +160,7 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 
 func TestRefundAuthorizeAndCapture(t *testing.T) {
 	createAuth := func() gomerchant.AuthorizeResponse {
-		authorizeResponse, _ := Paygent.Authorize(100, gomerchant.AuthorizeParams{
+		authorizeResponse, _ := Paygent.Authorize(1000, gomerchant.AuthorizeParams{
 			Currency: "JPY",
 			OrderID:  fmt.Sprint(time.Now().Unix()),
 			PaymentMethod: &gomerchant.PaymentMethod{

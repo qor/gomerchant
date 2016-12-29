@@ -142,6 +142,7 @@ type Response struct {
 
 func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (Response, error) {
 	var (
+		response    *http.Response
 		serviceURL  *url.URL
 		urlValues   = url.Values{}
 		results     = Response{Params: gomerchant.Params{}}
@@ -162,7 +163,7 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 				urlValues.Add(key, fmt.Sprint(value))
 			}
 
-			response, err := client.Post(serviceURL.String(), "application/x-www-form-urlencoded", strings.NewReader(urlValues.Encode()))
+			response, err = client.Post(serviceURL.String(), "application/x-www-form-urlencoded", strings.NewReader(urlValues.Encode()))
 
 			if err == nil {
 				if response.StatusCode == 200 {
@@ -295,15 +296,16 @@ func (paygent *Paygent) Refund(transactionID string, amount uint, params gomerch
 		err           error
 		response      = gomerchant.RefundResponse{TransactionID: transactionID}
 		requestParams = gomerchant.Params{
+			"payment_id":     transactionID,
 			"payment_amount": amount,
 			"reduction_flag": 1,
 		}
 	)
 
 	if params.Captured {
-		results, err = paygent.Request("023", requestParams)
+		results, err = paygent.Request("029", requestParams)
 	} else {
-		results, err = paygent.Request("021", requestParams)
+		results, err = paygent.Request("028", requestParams)
 	}
 
 	response.Params = results.Params
