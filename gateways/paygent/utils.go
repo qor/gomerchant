@@ -3,10 +3,12 @@ package paygent
 import (
 	"fmt"
 	"strconv"
+	"time"
 
-	"github.com/jinzhu/now"
 	"github.com/qor/gomerchant"
 )
+
+var PaygentServerTimeZone, _ = time.LoadLocation("Asia/Tokyo")
 
 type paramsInterface interface {
 	Get(string) (interface{}, bool)
@@ -43,14 +45,14 @@ func extractTransactionFromPaygentResponse(params Response) (transaction gomerch
 	}
 
 	if v, ok := params.Get("payment_init_date"); ok {
-		if t, err := now.Parse(fmt.Sprint(v)); err == nil {
+		if t, err := time.ParseInLocation("20060102150405", fmt.Sprint(v), PaygentServerTimeZone); err == nil {
 			transaction.CreatedAt = &t
 		}
 	}
 
 	if v, ok := params.Get("payment_amount"); ok {
 		if i, err := strconv.Atoi(fmt.Sprint(v)); err == nil {
-			transaction.Amount = uint(i)
+			transaction.Amount = i
 		}
 	}
 

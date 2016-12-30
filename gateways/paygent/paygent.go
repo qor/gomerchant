@@ -327,5 +327,7 @@ func (paygent *Paygent) Void(transactionID string, params gomerchant.VoidParams)
 
 func (paygent *Paygent) Query(transactionID string) (gomerchant.Transaction, error) {
 	results, err := paygent.Request("094", gomerchant.Params{"payment_id": transactionID})
-	return extractTransactionFromPaygentResponse(results), err
+	transaction := extractTransactionFromPaygentResponse(results)
+	transaction.Params = results.Params
+	return transaction, err
 }

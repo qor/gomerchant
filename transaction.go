@@ -4,7 +4,7 @@ import "time"
 
 type Transaction struct {
 	ID        string
-	Amount    uint
+	Amount    int
 	Currency  string
 	Captured  bool
 	Paid      bool // if authorized or captured

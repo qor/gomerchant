@@ -180,8 +180,8 @@ func TestRefund(t *testing.T) {
 	authorizeResponse := createAuth()
 	if refundResponse, err := Paygent.Refund(authorizeResponse.TransactionID, 100, gomerchant.RefundParams{}); err == nil {
 		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
-			if !(transaction.Amount == 900 && transaction.Paid == true && transaction.Captured == false && transaction.Cancelled == false) {
-				t.Errorf("transaction after refund auth is not correct, but got %#v", transaction)
+			if !(transaction.Amount == 900 && transaction.Paid == true && transaction.Captured == false && transaction.Cancelled == false && transaction.CreatedAt != nil) {
+				t.Errorf("transaction after refund authorized transaction is not correct, but got %#v", transaction)
 			}
 		} else {
 			t.Errorf("no error should happen when query transaction, but got %v, %#v", err, transaction)
@@ -194,8 +194,8 @@ func TestRefund(t *testing.T) {
 	authorizeResponse = createAuth()
 	if refundResponse, err := Paygent.Refund(authorizeResponse.TransactionID, 150, gomerchant.RefundParams{Captured: true}); err == nil {
 		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
-			if !(transaction.Amount == 850 && transaction.Paid == true && transaction.Captured == true && transaction.Cancelled == false) {
-				t.Errorf("transaction after refund auth is not correct, but got %#v", transaction)
+			if !(transaction.Amount == 850 && transaction.Paid == true && transaction.Captured == true && transaction.Cancelled == false && transaction.CreatedAt != nil) {
+				t.Errorf("transaction after refund authorized transaction is not correct, but got %#v", transaction)
 			}
 		} else {
 			t.Errorf("no error should happen when query transaction, but got %v, %#v", err, transaction)
@@ -209,7 +209,38 @@ func TestRefund(t *testing.T) {
 	captureResponse, _ := Paygent.Capture(authorizeResponse.TransactionID, gomerchant.CaptureParams{})
 	if refundResponse, err := Paygent.Refund(captureResponse.TransactionID, 200, gomerchant.RefundParams{Captured: true}); err == nil {
 		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
-			if !(transaction.Amount == 800 && transaction.Paid == true && transaction.Captured == true && transaction.Cancelled == false) {
+			if !(transaction.Amount == 800 && transaction.Paid == true && transaction.Captured == true && transaction.Cancelled == false && transaction.CreatedAt != nil) {
+				t.Errorf("transaction after refund captured transaction is not correct, but got %#v", transaction)
+			}
+		} else {
+			t.Errorf("no error should happen when query transaction, but got %v, %#v", err, transaction)
+		}
+	} else {
+		t.Errorf("no error should happen when refund transaction, but got %v", err)
+	}
+}
+
+func TestVoid(t *testing.T) {
+	// void authorized transaction
+	authorizeResponse := createAuth()
+	if refundResponse, err := Paygent.Void(authorizeResponse.TransactionID, gomerchant.VoidParams{}); err == nil {
+		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
+			if !(transaction.Amount == 1000 && transaction.Paid == false && transaction.Captured == false && transaction.Cancelled == true && transaction.CreatedAt != nil) {
+				t.Errorf("transaction after refund auth is not correct, but got %#v", transaction)
+			}
+		} else {
+			t.Errorf("no error should happen when query transaction, but got %v, %#v", err, transaction)
+		}
+	} else {
+		t.Errorf("no error should happen when refund transaction, but got %v", err)
+	}
+
+	// void captured transaction
+	authorizeResponse = createAuth()
+	captureResponse, _ := Paygent.Capture(authorizeResponse.TransactionID, gomerchant.CaptureParams{})
+	if refundResponse, err := Paygent.Void(captureResponse.TransactionID, gomerchant.VoidParams{Captured: true}); err == nil {
+		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
+			if !(transaction.Amount == 1000 && transaction.Paid == false && transaction.Captured == false && transaction.Cancelled == true && transaction.CreatedAt != nil) {
 				t.Errorf("transaction after refund captured is not correct, but got %#v", transaction)
 			}
 		} else {
