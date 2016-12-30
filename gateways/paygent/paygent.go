@@ -156,7 +156,11 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 			urlValues.Add("merchant_id", paygent.Config.MerchantID)
 			urlValues.Add("connect_id", paygent.Config.ConnectID)
 			urlValues.Add("connect_password", paygent.Config.ConnectPassword)
-			urlValues.Add("telegram_version", paygent.Config.TelegramVersion)
+			if paygent.Config.TelegramVersion != "" {
+				urlValues.Add("telegram_version", paygent.Config.TelegramVersion)
+			} else {
+				urlValues.Add("telegram_version", "1.0")
+			}
 			urlValues.Add("telegram_kind", telegramKind)
 
 			for key, value := range params {

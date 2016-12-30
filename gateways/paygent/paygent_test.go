@@ -43,7 +43,6 @@ func init() {
 		ClientFilePath:  config.ClientFilePath,
 		CertPassword:    config.CertPassword,
 		CAFilePath:      config.CAFilePath,
-		TelegramVersion: config.TelegramVersion,
 		ProductionMode:  config.ProductionMode,
 	})
 }
@@ -126,7 +125,7 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 		authorizeResult, err := Paygent.SecureCodeAuthorize(100,
 			paygent.SecureCodeParams{
 				UserAgent: "User-Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.3.12 (KHTML, like Gecko) Version/10.0.2 Safari/602.3.12",
-				TermURL:    "http://dev.lacoste.co.jp/order/return",
+				TermURL:    "http://getqor.com/order/return",
 				HttpAccept: "http",
 			},
 			gomerchant.AuthorizeParams{
