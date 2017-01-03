@@ -12,9 +12,9 @@ func getValidTerm(creditCard *gomerchant.CreditCard) string {
 
 var issuersMap = map[string]string{"visa": "V", "master": "M", "american_express": "X", "diners_club": "C", "jcb": "J"}
 
-func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCreditCardParams) (gomerchant.CreditCardParamsResponse, error) {
+func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCreditCardParams) (gomerchant.CreditCardResponse, error) {
 	var (
-		response   = gomerchant.CreditCardParamsResponse{CustomerID: creditCardParams.CustomerID}
+		response   = gomerchant.CreditCardResponse{CustomerID: creditCardParams.CustomerID}
 		creditCard = creditCardParams.CreditCard
 		issuer, _  = issuersMap[creditCard.Issuer()]
 	)
@@ -34,5 +34,23 @@ func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCredi
 	}
 	response.Params = results.Params
 
+	return response, err
+}
+
+func (paygent *Paygent) DeleteCreditCard(deleteCreditCardParams gomerchant.DeleteCreditCardParams) (gomerchant.DeleteCreditCardResponse, error) {
+	var (
+		response = gomerchant.DeleteCreditCardResponse{CustomerID: deleteCreditCardParams.CustomerID}
+	)
+
+	results, err := paygent.Request("026", gomerchant.Params{})
+	return response, err
+}
+
+func (paygent *Paygent) ListCreditCards(listCreditCardsParams gomerchant.ListCreditCardsParams) (gomerchant.ListCreditCardsResponse, error) {
+	var (
+		response = gomerchant.ListCreditCardsResponse{CustomerID: listCreditCardsParams.CustomerID}
+	)
+
+	results, err := paygent.Request("027", gomerchant.Params{})
 	return response, err
 }

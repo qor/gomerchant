@@ -41,7 +41,7 @@ func extractTransactionFromPaygentResponse(params Response) (transaction gomerch
 	if v, ok := params.Get("currency_code"); ok {
 		transaction.Currency = fmt.Sprint(v)
 	} else {
-		transaction.Currency = "JCB"
+		transaction.Currency = "JPY"
 	}
 
 	if v, ok := params.Get("payment_init_date"); ok {
