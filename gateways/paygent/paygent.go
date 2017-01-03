@@ -27,14 +27,14 @@ type Paygent struct {
 }
 
 type Config struct {
-	MerchantID      string
-	ConnectID       string
-	ConnectPassword string
+	MerchantID      string `required:"true"`
+	ConnectID       string `required:"true"`
+	ConnectPassword string `required:"true"`
 	TelegramVersion string
 
-	ClientFilePath string
+	ClientFilePath string `required:"true"`
 	CertPassword   string
-	CAFilePath     string
+	CAFilePath     string `required:"true"`
 
 	ProductionMode bool
 }
