@@ -47,7 +47,7 @@ func init() {
 	})
 }
 
-func createSavedCreditCard() (gomerchant.CreditCardParamsResponse, error) {
+func createSavedCreditCard() (gomerchant.CreditCardResponse, error) {
 	return Paygent.CreateCreditCard(gomerchant.CreateCreditCardParams{
 		CustomerID: fmt.Sprint(time.Now().Unix()),
 		CreditCard: &gomerchant.CreditCard{
@@ -247,5 +247,22 @@ func TestVoid(t *testing.T) {
 		}
 	} else {
 		t.Errorf("no error should happen when refund transaction, but got %v", err)
+	}
+}
+
+func TestListCreditCards(t *testing.T) {
+	if response, err := createSavedCreditCard(); err == nil {
+		// create anotther credit card
+		Paygent.CreateCreditCard(gomerchant.CreateCreditCardParams{
+			CustomerID: response.CustomerID,
+			CreditCard: &gomerchant.CreditCard{
+				Name:     "JCB Card",
+				Number:   "3580876521284076",
+				ExpMonth: 1,
+				ExpYear:  uint(time.Now().Year() + 1),
+			},
+		})
+
+		Paygent.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: response.CustomerID})
 	}
 }

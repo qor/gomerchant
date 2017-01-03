@@ -134,6 +134,7 @@ func (paygent *Paygent) serviceURLOfTelegramKind(telegramKind string) (*url.URL,
 var ResponseParser = regexp.MustCompile(`(?s)(\w+?)=(<!DOCTYPE.*HTML>|.*?)(\r\n|$)`)
 
 type Response struct {
+	RawBody        string
 	Result         string
 	ResponseCode   string
 	ResponseDetail string
@@ -177,6 +178,7 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 
 					shiftJISToUTF8 := transform.NewReader(bytes.NewReader(bodyBytes), japanese.ShiftJIS.NewDecoder())
 					utf8Bytes, _ := ioutil.ReadAll(shiftJISToUTF8)
+					results.RawBody = string(utf8Bytes)
 
 					if err == nil {
 						for _, value := range ResponseParser.FindAllStringSubmatch(string(utf8Bytes), -1) {

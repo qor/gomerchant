@@ -1,7 +1,9 @@
 package paygent
 
 import (
+	"encoding/csv"
 	"fmt"
+	"strings"
 
 	"github.com/qor/gomerchant"
 )
@@ -38,19 +40,43 @@ func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCredi
 }
 
 func (paygent *Paygent) DeleteCreditCard(deleteCreditCardParams gomerchant.DeleteCreditCardParams) (gomerchant.DeleteCreditCardResponse, error) {
-	var (
-		response = gomerchant.DeleteCreditCardResponse{CustomerID: deleteCreditCardParams.CustomerID}
-	)
+	var response = gomerchant.DeleteCreditCardResponse{}
 
-	results, err := paygent.Request("026", gomerchant.Params{})
+	results, err := paygent.Request("026", gomerchant.Params{"customer_id": deleteCreditCardParams.CustomerID, "customer_card_id": deleteCreditCardParams.CreditCardID}.IgnoreBlankFields())
+	response.Params = response.Params
 	return response, err
 }
 
 func (paygent *Paygent) ListCreditCards(listCreditCardsParams gomerchant.ListCreditCardsParams) (gomerchant.ListCreditCardsResponse, error) {
-	var (
-		response = gomerchant.ListCreditCardsResponse{CustomerID: listCreditCardsParams.CustomerID}
-	)
+	var response = gomerchant.ListCreditCardsResponse{CustomerID: listCreditCardsParams.CustomerID}
 
-	results, err := paygent.Request("027", gomerchant.Params{})
+	results, err := paygent.Request("027", gomerchant.Params{"customer_id": listCreditCardsParams.CustomerID})
+
+	if err == nil {
+	}
+
 	return response, err
+}
+
+func parseListCreditCardsResponse(response *Response) ([]gomerchant.CreditCard, error) {
+	for _, str := range strings.Split(response.RawBody, "\r\n") {
+		row := csv.NewReader(strings.NewReader(str))
+		if record, err := row.Read(); err == nil {
+			switch record[0] {
+			case "1":
+				// response information
+				response.Result = record[1]
+				response.ResponseCode = record[2]
+				response.ResponseDetail = record[3]
+			case "2":
+				// card header
+			case "3":
+				// card information
+			case "4":
+				// card numbers
+			}
+		} else {
+			return response, err
+		}
+	}
 }

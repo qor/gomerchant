@@ -30,6 +30,7 @@ type AuthorizeResponse struct {
 	Params
 }
 
+// Complete Authorize
 type CompleteAuthorizeParams struct {
 	Params
 }
@@ -68,35 +69,4 @@ type VoidParams struct {
 type VoidResponse struct {
 	TransactionID string
 	Params
-}
-
-// CreateCreditCard Params
-type CreateCreditCardParams struct {
-	CustomerID string
-	CreditCard *CreditCard
-}
-
-type CreditCardResponse struct {
-	CustomerID   string
-	CreditCardID string
-	Params
-}
-
-// Delete Credit Cards Params
-type DeleteCreditCardParams struct {
-	CustomerID string
-}
-
-type DeleteCreditCardResponse struct {
-	CustomerID string
-}
-
-// List Credit Cards Params
-type ListCreditCardsParams struct {
-	CustomerID string
-}
-
-type ListCreditCardsResponse struct {
-	CustomerID  string
-	CreditCards []CreditCard
 }
