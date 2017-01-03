@@ -1,6 +1,8 @@
 package gomerchant
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // PaymentGateway interface
 type PaymentGateway interface {
@@ -8,6 +10,11 @@ type PaymentGateway interface {
 	Capture(transactionID string, params CaptureParams) (CaptureResponse, error)
 	Refund(transactionID string, amount uint, params RefundParams) (RefundResponse, error)
 	Void(transactionID string, params VoidParams) (VoidResponse, error)
+
+	// Credit Card Manager
+	CreateCreditCard(creditCardParams CreateCreditCardParams) (CreditCardParamsResponse, error)
+	ListCreditCards(customerID string) ([]*CreditCard, error)
+	DeleteCreditCard(creditCardID string) error
 }
 
 // Authorize Params

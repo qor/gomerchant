@@ -36,3 +36,13 @@ func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCredi
 
 	return response, err
 }
+
+func (paygent *Paygent) ListCreditCards(customerID string) (cards []*gomerchant.CreditCard, err error) {
+	panic("implement this.")
+	return
+}
+
+func (paygent *Paygent) DeleteCreditCard(creditCardID string) (err error) {
+	panic("implement this.")
+	return
+}
