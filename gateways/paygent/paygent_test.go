@@ -263,6 +263,33 @@ func TestListCreditCards(t *testing.T) {
 			},
 		})
 
-		Paygent.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: response.CustomerID})
+		if response, err := Paygent.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: response.CustomerID}); err == nil {
+			if len(response.CreditCards) != 2 {
+				t.Errorf("Should found two saved credit cards, but got %v", response.CreditCards)
+			}
+
+			for _, creditCard := range response.CreditCards {
+				if creditCard.MaskedNumber == "" || creditCard.ExpYear == 0 || creditCard.ExpMonth == 0 || creditCard.CustomerID == "" || creditCard.CreditCardID == "" {
+					t.Errorf("Credit card's information should be correct, but got %v", creditCard)
+				}
+			}
+		} else {
+			t.Errorf("no error should happen when query saved credit cards, but got %v", err)
+		}
+	}
+}
+
+func TestGetCreditCard(t *testing.T) {
+	if response, err := createSavedCreditCard(); err == nil {
+		if response, err := Paygent.GetCreditCard(gomerchant.GetCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
+			creditCard := response.CreditCard
+			if creditCard == nil {
+				t.Errorf("Should found saved credit cards, but got %v", response)
+			} else if creditCard.MaskedNumber == "" || creditCard.ExpYear == 0 || creditCard.ExpMonth == 0 || creditCard.CustomerID == "" || creditCard.CreditCardID == "" {
+				t.Errorf("Credit card's information should be correct, but got %v", creditCard)
+			}
+		} else {
+			t.Errorf("no error should happen when query saved credit card, but got %v", err)
+		}
 	}
 }

@@ -27,7 +27,7 @@ type GetCreditCardParams struct {
 }
 
 type GetCreditCardResponse struct {
-	CreditCard CustomerCreditCard
+	CreditCard *CustomerCreditCard
 	Params
 }
 
@@ -47,7 +47,7 @@ type ListCreditCardsParams struct {
 }
 
 type ListCreditCardsResponse struct {
-	CreditCards []CustomerCreditCard
+	CreditCards []*CustomerCreditCard
 	Params
 }
 
