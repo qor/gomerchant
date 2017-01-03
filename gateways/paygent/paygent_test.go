@@ -293,3 +293,15 @@ func TestGetCreditCard(t *testing.T) {
 		}
 	}
 }
+
+func TestDeleteCreditCard(t *testing.T) {
+	if response, err := createSavedCreditCard(); err == nil {
+		if _, err := Paygent.DeleteCreditCard(gomerchant.DeleteCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
+			if response, err := Paygent.GetCreditCard(gomerchant.GetCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
+				t.Errorf("Should failed to get credit card, but got %v", response)
+			}
+		} else {
+			t.Errorf("no error should happen when delete saved credit card, but got %v", err)
+		}
+	}
+}
