@@ -29,6 +29,15 @@ Paygent.CreateCreditCard(gomerchant.CreateCreditCardParams{
   },
 })
 
+// Get Credit Card
+Paygent.GetCreditCard(gomerchant.GetCreditCardParams{CustomerID: "customer_id", CreditCardID: "3580876521284076"})
+
+// Delete Stored Credit Card
+Paygent.DeleteCreditCard(gomerchant.DeleteCreditCardParams{CustomerID: "customer_id", CreditCardID: "3580876521284076"})
+
+// List Stored Credit Cards
+Paygent.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: "customer_id"})
+
 // Take Auth
 Paygent.Authorize(100, gomerchant.AuthorizeParams{
   Currency: "JPY",
