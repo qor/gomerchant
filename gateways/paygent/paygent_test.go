@@ -12,7 +12,9 @@ import (
 )
 
 var (
-	Paygent *paygent.Paygent
+	creditCardManager gomerchant.CreditCardManager
+	gateway           gomerchant.PaymentGateway
+	gateway3d         gomerchant.PaymentGateway3D
 )
 
 type Config struct {
@@ -36,7 +38,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	Paygent = paygent.New(&paygent.Config{
+	Paygent := paygent.New(&paygent.Config{
 		MerchantID:      config.MerchantID,
 		ConnectID:       config.ConnectID,
 		ConnectPassword: config.ConnectPassword,
@@ -45,10 +47,14 @@ func init() {
 		CAFilePath:      config.CAFilePath,
 		ProductionMode:  config.ProductionMode,
 	})
+
+	creditCardManager = Paygent
+	gateway = Paygent
+	gateway3d = Paygent
 }
 
 func createSavedCreditCard() (gomerchant.CreditCardResponse, error) {
-	return Paygent.CreateCreditCard(gomerchant.CreateCreditCardParams{
+	return creditCardManager.CreateCreditCard(gomerchant.CreateCreditCardParams{
 		CustomerID: fmt.Sprint(time.Now().Unix()),
 		CreditCard: &gomerchant.CreditCard{
 			Name:     "JCB Card",
@@ -66,7 +72,7 @@ func TestCreateCreditCard(t *testing.T) {
 }
 
 func TestAuthorizeAndCapture(t *testing.T) {
-	authorizeResult, err := Paygent.Authorize(100, gomerchant.AuthorizeParams{
+	authorizeResult, err := gateway.Authorize(100, gomerchant.AuthorizeParams{
 		Currency: "JPY",
 		OrderID:  fmt.Sprint(time.Now().Unix()),
 		PaymentMethod: &gomerchant.PaymentMethod{
@@ -83,7 +89,7 @@ func TestAuthorizeAndCapture(t *testing.T) {
 		t.Error(err, authorizeResult)
 	}
 
-	captureResult, err := Paygent.Capture(authorizeResult.TransactionID, gomerchant.CaptureParams{})
+	captureResult, err := gateway.Capture(authorizeResult.TransactionID, gomerchant.CaptureParams{})
 
 	if err != nil || captureResult.TransactionID == "" {
 		t.Error(err, captureResult)
@@ -92,7 +98,7 @@ func TestAuthorizeAndCapture(t *testing.T) {
 
 func TestAuthorizeAndCaptureWithSavedCreditCard(t *testing.T) {
 	if savedCreditCard, err := createSavedCreditCard(); err == nil {
-		authorizeResult, err := Paygent.Authorize(100, gomerchant.AuthorizeParams{
+		authorizeResult, err := gateway.Authorize(100, gomerchant.AuthorizeParams{
 			Currency: "JPY",
 			OrderID:  fmt.Sprint(time.Now().Unix()),
 			PaymentMethod: &gomerchant.PaymentMethod{
@@ -107,7 +113,7 @@ func TestAuthorizeAndCaptureWithSavedCreditCard(t *testing.T) {
 			t.Error(err, authorizeResult)
 		}
 
-		captureResult, err := Paygent.Capture(authorizeResult.TransactionID, gomerchant.CaptureParams{})
+		captureResult, err := gateway.Capture(authorizeResult.TransactionID, gomerchant.CaptureParams{})
 
 		if err != nil || captureResult.TransactionID == "" {
 			t.Error(err, captureResult)
@@ -122,8 +128,8 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 	}
 
 	for card, is3D := range cards {
-		authorizeResult, err := Paygent.SecureCodeAuthorize(100,
-			paygent.SecureCodeParams{
+		authorizeResult, err := gateway3d.SecureCodeAuthorize(100,
+			gomerchant.SecureCodeParams{
 				UserAgent: "User-Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.3.12 (KHTML, like Gecko) Version/10.0.2 Safari/602.3.12",
 				TermURL:    "http://getqor.com/order/return",
 				HttpAccept: "http",
@@ -158,7 +164,7 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 }
 
 func createAuth() gomerchant.AuthorizeResponse {
-	authorizeResponse, _ := Paygent.Authorize(1000, gomerchant.AuthorizeParams{
+	authorizeResponse, _ := gateway.Authorize(1000, gomerchant.AuthorizeParams{
 		Currency: "JPY",
 		OrderID:  fmt.Sprint(time.Now().Unix()),
 		PaymentMethod: &gomerchant.PaymentMethod{
@@ -177,8 +183,8 @@ func createAuth() gomerchant.AuthorizeResponse {
 func TestRefund(t *testing.T) {
 	// refund authorized transaction
 	authorizeResponse := createAuth()
-	if refundResponse, err := Paygent.Refund(authorizeResponse.TransactionID, 100, gomerchant.RefundParams{}); err == nil {
-		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
+	if refundResponse, err := gateway.Refund(authorizeResponse.TransactionID, 100, gomerchant.RefundParams{}); err == nil {
+		if transaction, err := gateway.Query(refundResponse.TransactionID); err == nil {
 			if !(transaction.Amount == 900 && transaction.Paid == true && transaction.Captured == false && transaction.Cancelled == false && transaction.CreatedAt != nil) {
 				t.Errorf("transaction after refund authorized transaction is not correct, but got %#v", transaction)
 			}
@@ -191,8 +197,8 @@ func TestRefund(t *testing.T) {
 
 	// refund authorized transaction, and capture it
 	authorizeResponse = createAuth()
-	if refundResponse, err := Paygent.Refund(authorizeResponse.TransactionID, 150, gomerchant.RefundParams{Captured: true}); err == nil {
-		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
+	if refundResponse, err := gateway.Refund(authorizeResponse.TransactionID, 150, gomerchant.RefundParams{Captured: true}); err == nil {
+		if transaction, err := gateway.Query(refundResponse.TransactionID); err == nil {
 			if !(transaction.Amount == 850 && transaction.Paid == true && transaction.Captured == true && transaction.Cancelled == false && transaction.CreatedAt != nil) {
 				t.Errorf("transaction after refund authorized transaction is not correct, but got %#v", transaction)
 			}
@@ -205,9 +211,9 @@ func TestRefund(t *testing.T) {
 
 	// refund captured transaction
 	authorizeResponse = createAuth()
-	captureResponse, _ := Paygent.Capture(authorizeResponse.TransactionID, gomerchant.CaptureParams{})
-	if refundResponse, err := Paygent.Refund(captureResponse.TransactionID, 200, gomerchant.RefundParams{Captured: true}); err == nil {
-		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
+	captureResponse, _ := gateway.Capture(authorizeResponse.TransactionID, gomerchant.CaptureParams{})
+	if refundResponse, err := gateway.Refund(captureResponse.TransactionID, 200, gomerchant.RefundParams{Captured: true}); err == nil {
+		if transaction, err := gateway.Query(refundResponse.TransactionID); err == nil {
 			if !(transaction.Amount == 800 && transaction.Paid == true && transaction.Captured == true && transaction.Cancelled == false && transaction.CreatedAt != nil) {
 				t.Errorf("transaction after refund captured transaction is not correct, but got %#v", transaction)
 			}
@@ -222,8 +228,8 @@ func TestRefund(t *testing.T) {
 func TestVoid(t *testing.T) {
 	// void authorized transaction
 	authorizeResponse := createAuth()
-	if refundResponse, err := Paygent.Void(authorizeResponse.TransactionID, gomerchant.VoidParams{}); err == nil {
-		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
+	if refundResponse, err := gateway.Void(authorizeResponse.TransactionID, gomerchant.VoidParams{}); err == nil {
+		if transaction, err := gateway.Query(refundResponse.TransactionID); err == nil {
 			if !(transaction.Amount == 1000 && transaction.Paid == false && transaction.Captured == false && transaction.Cancelled == true && transaction.CreatedAt != nil) {
 				t.Errorf("transaction after refund auth is not correct, but got %#v", transaction)
 			}
@@ -236,9 +242,9 @@ func TestVoid(t *testing.T) {
 
 	// void captured transaction
 	authorizeResponse = createAuth()
-	captureResponse, _ := Paygent.Capture(authorizeResponse.TransactionID, gomerchant.CaptureParams{})
-	if refundResponse, err := Paygent.Void(captureResponse.TransactionID, gomerchant.VoidParams{Captured: true}); err == nil {
-		if transaction, err := Paygent.Query(refundResponse.TransactionID); err == nil {
+	captureResponse, _ := gateway.Capture(authorizeResponse.TransactionID, gomerchant.CaptureParams{})
+	if refundResponse, err := gateway.Void(captureResponse.TransactionID, gomerchant.VoidParams{Captured: true}); err == nil {
+		if transaction, err := gateway.Query(refundResponse.TransactionID); err == nil {
 			if !(transaction.Amount == 1000 && transaction.Paid == false && transaction.Captured == false && transaction.Cancelled == true && transaction.CreatedAt != nil) {
 				t.Errorf("transaction after refund captured is not correct, but got %#v", transaction)
 			}
@@ -253,7 +259,7 @@ func TestVoid(t *testing.T) {
 func TestListCreditCards(t *testing.T) {
 	if response, err := createSavedCreditCard(); err == nil {
 		// create anotther credit card
-		Paygent.CreateCreditCard(gomerchant.CreateCreditCardParams{
+		creditCardManager.CreateCreditCard(gomerchant.CreateCreditCardParams{
 			CustomerID: response.CustomerID,
 			CreditCard: &gomerchant.CreditCard{
 				Name:     "JCB Card",
@@ -263,7 +269,7 @@ func TestListCreditCards(t *testing.T) {
 			},
 		})
 
-		if response, err := Paygent.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: response.CustomerID}); err == nil {
+		if response, err := creditCardManager.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: response.CustomerID}); err == nil {
 			if len(response.CreditCards) != 2 {
 				t.Errorf("Should found two saved credit cards, but got %v", response.CreditCards)
 			}
@@ -281,7 +287,7 @@ func TestListCreditCards(t *testing.T) {
 
 func TestGetCreditCard(t *testing.T) {
 	if response, err := createSavedCreditCard(); err == nil {
-		if response, err := Paygent.GetCreditCard(gomerchant.GetCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
+		if response, err := creditCardManager.GetCreditCard(gomerchant.GetCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
 			creditCard := response.CreditCard
 			if creditCard == nil {
 				t.Errorf("Should found saved credit cards, but got %v", response)
@@ -296,8 +302,8 @@ func TestGetCreditCard(t *testing.T) {
 
 func TestDeleteCreditCard(t *testing.T) {
 	if response, err := createSavedCreditCard(); err == nil {
-		if _, err := Paygent.DeleteCreditCard(gomerchant.DeleteCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
-			if response, err := Paygent.GetCreditCard(gomerchant.GetCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
+		if _, err := creditCardManager.DeleteCreditCard(gomerchant.DeleteCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
+			if response, err := creditCardManager.GetCreditCard(gomerchant.GetCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {
 				t.Errorf("Should failed to get credit card, but got %v", response)
 			}
 		} else {

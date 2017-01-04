@@ -3,7 +3,7 @@ package gomerchant
 // CreditCardManager interface
 type CreditCardManager interface {
 	CreateCreditCard(creditCardParams CreateCreditCardParams) (CreditCardResponse, error)
-	GetCreditCard(creditCardParams CreateCreditCardParams) (CreditCardResponse, error)
+	GetCreditCard(creditCardParams GetCreditCardParams) (GetCreditCardResponse, error)
 	ListCreditCards(listCreditCardsParams ListCreditCardsParams) (ListCreditCardsResponse, error)
 	DeleteCreditCard(deleteCreditCardParams DeleteCreditCardParams) (DeleteCreditCardResponse, error)
 }

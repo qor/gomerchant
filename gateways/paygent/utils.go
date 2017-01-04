@@ -14,14 +14,14 @@ type paramsInterface interface {
 	Get(string) (interface{}, bool)
 }
 
-func get3DModeParams(params paramsInterface) (bool, *SecureCodeParams) {
+func get3DModeParams(params paramsInterface) (bool, *gomerchant.SecureCodeParams) {
 	if value, ok := params.Get("3DMode"); ok {
 		if fmt.Sprint(value) == "true" {
 			if value, ok := params.Get("3DParams"); ok {
-				if v, ok := value.(SecureCodeParams); ok {
+				if v, ok := value.(gomerchant.SecureCodeParams); ok {
 					return true, &v
 				}
-				if v, ok := value.(*SecureCodeParams); ok {
+				if v, ok := value.(*gomerchant.SecureCodeParams); ok {
 					return true, v
 				}
 			}
