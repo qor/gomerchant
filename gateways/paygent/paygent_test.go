@@ -14,7 +14,7 @@ import (
 var (
 	creditCardManager gomerchant.CreditCardManager
 	gateway           gomerchant.PaymentGateway
-	gateway3d         gomerchant.PaymentGateway3D
+	gateway3d         *paygent.Paygent
 )
 
 type Config struct {
@@ -129,7 +129,7 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 
 	for card, is3D := range cards {
 		authorizeResult, err := gateway3d.SecureCodeAuthorize(100,
-			gomerchant.SecureCodeParams{
+			paygent.SecureCodeParams{
 				UserAgent: "User-Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12) AppleWebKit/602.3.12 (KHTML, like Gecko) Version/10.0.2 Safari/602.3.12",
 				TermURL:    "http://getqor.com/order/return",
 				HttpAccept: "http",

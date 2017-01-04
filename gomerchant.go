@@ -8,7 +8,9 @@ type PaymentGateway interface {
 	Capture(transactionID string, params CaptureParams) (CaptureResponse, error)
 	Refund(transactionID string, amount uint, params RefundParams) (RefundResponse, error)
 	Void(transactionID string, params VoidParams) (VoidResponse, error)
+
 	Query(transactionID string) (Transaction, error)
+	CompleteAuthorize(paymentID string, params CompleteAuthorizeParams) (CompleteAuthorizeResponse, error)
 }
 
 // Authorize Params
@@ -70,18 +72,4 @@ type VoidParams struct {
 type VoidResponse struct {
 	TransactionID string
 	Params
-}
-
-//
-
-type SecureCodeParams struct {
-	UserAgent  string
-	TermURL    string
-	HttpAccept string
-}
-
-// PaymentGateway interface
-type PaymentGateway3D interface {
-	SecureCodeAuthorize(amount uint64, secureCodeParams SecureCodeParams, params AuthorizeParams) (AuthorizeResponse, error)
-	CompleteAuthorize(paymentID string, params CompleteAuthorizeParams) (CompleteAuthorizeResponse, error)
 }

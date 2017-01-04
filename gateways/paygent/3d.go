@@ -7,7 +7,13 @@ import (
 	"github.com/qor/gomerchant"
 )
 
-func (paygent *Paygent) SecureCodeAuthorize(amount uint64, secureCodeParams gomerchant.SecureCodeParams, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
+type SecureCodeParams struct {
+	UserAgent  string
+	TermURL    string
+	HttpAccept string
+}
+
+func (paygent *Paygent) SecureCodeAuthorize(amount uint64, secureCodeParams SecureCodeParams, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
 	if params.Params == nil {
 		params.Params = gomerchant.Params{}
 	}
