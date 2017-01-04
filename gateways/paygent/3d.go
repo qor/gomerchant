@@ -17,8 +17,8 @@ func (paygent *Paygent) SecureCodeAuthorize(amount uint64, secureCodeParams Secu
 	if params.Params == nil {
 		params.Params = gomerchant.Params{}
 	}
-	params.Set("3DMode", true)
-	params.Set("3DParams", secureCodeParams)
+	params.Set("Paygent3DMode", true)
+	params.Set("Paygent3DParams", secureCodeParams)
 
 	return paygent.Authorize(amount, params)
 }
