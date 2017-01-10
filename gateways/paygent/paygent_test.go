@@ -285,6 +285,14 @@ func TestListCreditCards(t *testing.T) {
 	}
 }
 
+func TestListCreditCardsWithNoResult(t *testing.T) {
+	if response, err := creditCardManager.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: fmt.Sprint(time.Now().Unix()) + "none"}); err != nil {
+		t.Errorf("should not return error, but got %v", err)
+	} else if len(response.CreditCards) != 0 {
+		t.Errorf("credit card's count should be zero")
+	}
+}
+
 func TestGetCreditCard(t *testing.T) {
 	if response, err := createSavedCreditCard(); err == nil {
 		if response, err := creditCardManager.GetCreditCard(gomerchant.GetCreditCardParams{CustomerID: response.CustomerID, CreditCardID: response.CreditCardID}); err == nil {

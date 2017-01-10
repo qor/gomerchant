@@ -76,6 +76,10 @@ func (paygent *Paygent) ListCreditCards(listCreditCardsParams gomerchant.ListCre
 		response.CreditCards, err = parseListCreditCardsResponse(&results)
 	}
 
+	if results.ResponseCode == "P026" {
+		err = nil
+	}
+
 	return response, err
 }
 
