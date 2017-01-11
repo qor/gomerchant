@@ -299,7 +299,7 @@ func TestGetCreditCard(t *testing.T) {
 			creditCard := response.CreditCard
 			if creditCard == nil {
 				t.Errorf("Should found saved credit cards, but got %v", response)
-			} else if creditCard.MaskedNumber == "" || creditCard.ExpYear == 0 || creditCard.ExpMonth == 0 || creditCard.CustomerID == "" || creditCard.CreditCardID == "" {
+			} else if creditCard.Brand == "" || creditCard.MaskedNumber == "" || creditCard.ExpYear == 0 || creditCard.ExpMonth == 0 || creditCard.CustomerID == "" || creditCard.CreditCardID == "" {
 				t.Errorf("Credit card's information should be correct, but got %v", creditCard)
 			}
 		} else {

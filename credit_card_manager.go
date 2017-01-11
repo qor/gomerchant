@@ -58,5 +58,6 @@ type CustomerCreditCard struct {
 	MaskedNumber string
 	ExpMonth     uint
 	ExpYear      uint
+	Brand        string
 	Params
 }

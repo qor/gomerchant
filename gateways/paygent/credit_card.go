@@ -15,13 +15,13 @@ func getValidTerm(creditCard *gomerchant.CreditCard) string {
 	return fmt.Sprintf("%02d", creditCard.ExpMonth) + fmt.Sprint(creditCard.ExpYear)[len(fmt.Sprint(creditCard.ExpYear))-2:]
 }
 
-var issuersMap = map[string]string{"visa": "V", "master": "M", "american_express": "X", "diners_club": "C", "jcb": "J"}
+var brandsMap = map[string]string{"visa": "V", "master": "M", "american_express": "X", "diners_club": "C", "jcb": "J"}
 
 func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCreditCardParams) (gomerchant.CreditCardResponse, error) {
 	var (
 		response   = gomerchant.CreditCardResponse{CustomerID: creditCardParams.CustomerID}
 		creditCard = creditCardParams.CreditCard
-		issuer, _  = issuersMap[creditCard.Issuer()]
+		brand, _   = brandsMap[creditCard.Brand()]
 	)
 
 	results, err := paygent.Request("025", gomerchant.Params{
@@ -29,7 +29,7 @@ func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCredi
 		"card_number":     creditCard.Number,
 		"card_valid_term": getValidTerm(creditCard),
 		"cardholder_name": creditCard.Name,
-		"card_brand":      issuer,
+		"card_brand":      brand,
 	}.IgnoreBlankFields())
 
 	if err == nil {
@@ -125,6 +125,18 @@ func parseListCreditCardsResponse(response *Response) (cards []*gomerchant.Custo
 
 					if v, ok := params.Get("card_number"); ok {
 						customerCard.MaskedNumber = fmt.Sprint(v)
+					}
+
+					if v, ok := params.Get("card_brand"); ok {
+						for key, value := range brandsMap {
+							if fmt.Sprint(v) == value {
+								customerCard.Brand = key
+							}
+						}
+
+						if customerCard.Brand == "" {
+							customerCard.Brand = fmt.Sprint(v)
+						}
 					}
 
 					if v, ok := params.Get("card_valid_term"); ok {

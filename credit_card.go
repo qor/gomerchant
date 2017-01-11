@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-var Issuers = map[string]*regexp.Regexp{
+var Brands = map[string]*regexp.Regexp{
 	`visa`:               regexp.MustCompile(`^4\d{12}(\d{3})?$`),
 	`master`:             regexp.MustCompile(`^(5[1-5]\d{4}|677189)\d{10}$`),
 	`discover`:           regexp.MustCompile(`^(6011|65\d{2}|64[4-9]\d)\d{12}|(62\d{14})$`),
@@ -33,8 +33,8 @@ type CreditCard struct {
 	CVC      string
 }
 
-func (creditCard CreditCard) Issuer() string {
-	for name, match := range Issuers {
+func (creditCard CreditCard) Brand() string {
+	for name, match := range Brands {
 		if match.MatchString(creditCard.Number) {
 			return name
 		}
