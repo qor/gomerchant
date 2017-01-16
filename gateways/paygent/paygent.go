@@ -267,6 +267,7 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 		}
 	}
 
+	response.RawBody = results.RawBody
 	response.Params = results.Params
 
 	return response, err
@@ -285,6 +286,7 @@ func (paygent *Paygent) Capture(transactionID string, params gomerchant.CaptureP
 			response.TransactionID = fmt.Sprint(paymentID)
 		}
 	}
+	response.RawBody = results.RawBody
 	response.Params = results.Params
 
 	return response, err
@@ -311,6 +313,7 @@ func (paygent *Paygent) Refund(transactionID string, amount uint, params gomerch
 		response.TransactionID = paymentID
 	}
 
+	response.RawBody = results.RawBody
 	return response, err
 }
 
@@ -327,7 +330,7 @@ func (paygent *Paygent) Void(transactionID string, params gomerchant.VoidParams)
 	if paymentID, ok := getPaymentID(results); ok {
 		response.TransactionID = paymentID
 	}
-
+	response.RawBody = results.RawBody
 	return response, err
 }
 
