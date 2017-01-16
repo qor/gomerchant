@@ -5,13 +5,12 @@ import "net/http"
 // PaymentGateway interface
 type PaymentGateway interface {
 	Authorize(amount uint64, params AuthorizeParams) (AuthorizeResponse, error)
-	CompleteAuthorize(transactionID string, params CompleteAuthorizeParams) (CompleteAuthorizeResponse, error)
 	Capture(transactionID string, params CaptureParams) (CaptureResponse, error)
-
 	Refund(transactionID string, amount uint, params RefundParams) (RefundResponse, error)
 	Void(transactionID string, params VoidParams) (VoidResponse, error)
 
 	Query(transactionID string) (Transaction, error)
+	CompleteAuthorize(paymentID string, params CompleteAuthorizeParams) (CompleteAuthorizeResponse, error)
 }
 
 // Authorize Params
@@ -31,7 +30,6 @@ type AuthorizeResponse struct {
 	TransactionID  string
 	HandleRequest  bool                                                   // need process request after authorize or not
 	RequestHandler func(http.ResponseWriter, *http.Request, Params) error // process request
-	RawBody        string
 	Params
 }
 
@@ -41,7 +39,6 @@ type CompleteAuthorizeParams struct {
 }
 
 type CompleteAuthorizeResponse struct {
-	RawBody string
 	Params
 }
 
@@ -52,7 +49,6 @@ type CaptureParams struct {
 
 type CaptureResponse struct {
 	TransactionID string
-	RawBody       string
 	Params
 }
 
@@ -64,7 +60,6 @@ type RefundParams struct {
 
 type RefundResponse struct {
 	TransactionID string
-	RawBody       string
 	Params
 }
 
@@ -76,6 +71,5 @@ type VoidParams struct {
 
 type VoidResponse struct {
 	TransactionID string
-	RawBody       string
 	Params
 }
