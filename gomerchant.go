@@ -5,12 +5,12 @@ import "net/http"
 // PaymentGateway interface
 type PaymentGateway interface {
 	Authorize(amount uint64, params AuthorizeParams) (AuthorizeResponse, error)
+	CompleteAuthorize(paymentID string, params CompleteAuthorizeParams) (CompleteAuthorizeResponse, error)
 	Capture(transactionID string, params CaptureParams) (CaptureResponse, error)
 	Refund(transactionID string, amount uint, params RefundParams) (RefundResponse, error)
 	Void(transactionID string, params VoidParams) (VoidResponse, error)
 
 	Query(transactionID string) (Transaction, error)
-	CompleteAuthorize(paymentID string, params CompleteAuthorizeParams) (CompleteAuthorizeResponse, error)
 }
 
 // Authorize Params

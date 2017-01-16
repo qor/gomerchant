@@ -179,6 +179,7 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 					shiftJISToUTF8 := transform.NewReader(bytes.NewReader(bodyBytes), japanese.ShiftJIS.NewDecoder())
 					utf8Bytes, _ := ioutil.ReadAll(shiftJISToUTF8)
 					results.RawBody = string(utf8Bytes)
+					results.Params.Set("RawBody", results.RawBody)
 
 					if err == nil {
 						for _, value := range ResponseParser.FindAllStringSubmatch(string(utf8Bytes), -1) {
