@@ -32,9 +32,11 @@ type Config struct {
 	ConnectPassword string `required:"true"`
 	TelegramVersion string
 
-	ClientFilePath string `required:"true"`
-	CertPassword   string
-	CAFilePath     string `required:"true"`
+	CertPassword      string
+	ClientFilePath    string // this is required, if ClientFileContent is blank
+	ClientFileContent string // this is required, if ClientFilePath is blank
+	CAFilePath        string // this is required, if CAFileContent is blank
+	CAFileContent     string // this is required, if CAFilePath is blank
 
 	ProductionMode bool
 }
@@ -51,10 +53,27 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 		caCertPool              = x509.NewCertPool()
 	)
 
-	if pemData, err := ioutil.ReadFile(paygent.Config.ClientFilePath); err == nil {
+	if paygent.Config.ClientFileContent == "" {
+		if pemData, err := ioutil.ReadFile(paygent.Config.ClientFilePath); err == nil {
+			paygent.Config.ClientFileContent = string(pemData)
+		} else {
+			return nil, err
+		}
+	}
+
+	if paygent.Config.CAFileContent == "" {
+		if pemData, err := ioutil.ReadFile(paygent.Config.CAFilePath); err == nil {
+			paygent.Config.CAFileContent = string(pemData)
+		} else {
+			return nil, err
+		}
+	}
+
+	{ // ClientFile
 		var (
 			originalPemData []byte
 			block           *pem.Block
+			pemData         = []byte(paygent.Config.ClientFileContent)
 		)
 
 		caCertPool.AppendCertsFromPEM(pemData)
@@ -85,8 +104,8 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 		}
 	}
 
-	if pemData, err := ioutil.ReadFile(paygent.Config.CAFilePath); err == nil {
-		caCertPool.AppendCertsFromPEM(pemData)
+	{ // CAFile
+		caCertPool.AppendCertsFromPEM([]byte(paygent.Config.CAFileContent))
 	}
 
 	if cert, err := tls.X509KeyPair(certBytes, certKeyBytes); err == nil {
