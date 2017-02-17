@@ -12,7 +12,13 @@ import (
 )
 
 func getValidTerm(creditCard *gomerchant.CreditCard) string {
-	return fmt.Sprintf("%02d", creditCard.ExpMonth) + fmt.Sprint(creditCard.ExpYear)[len(fmt.Sprint(creditCard.ExpYear))-2:]
+	year := fmt.Sprint(creditCard.ExpYear)
+	if len(year) >= 2 {
+		year = year[len(year)-2:]
+	} else {
+		year = ""
+	}
+	return fmt.Sprintf("%02d", creditCard.ExpMonth) + year
 }
 
 var brandsMap = map[string]string{"visa": "V", "master": "M", "american_express": "X", "diners_club": "C", "jcb": "J"}
