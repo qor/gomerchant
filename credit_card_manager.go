@@ -54,6 +54,7 @@ type ListCreditCardsResponse struct {
 // CustomerCard
 type CustomerCreditCard struct {
 	CustomerID   string
+	CustomerName string
 	CreditCardID string
 	MaskedNumber string
 	ExpMonth     uint

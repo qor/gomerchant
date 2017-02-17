@@ -129,6 +129,10 @@ func parseListCreditCardsResponse(response *Response) (cards []*gomerchant.Custo
 						customerCard.CreditCardID = fmt.Sprint(v)
 					}
 
+					if v, ok := params.Get("cardholder_name"); ok {
+						customerCard.CustomerName = fmt.Sprint(v)
+					}
+
 					if v, ok := params.Get("card_number"); ok {
 						customerCard.MaskedNumber = fmt.Sprint(v)
 					}
