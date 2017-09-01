@@ -1,6 +1,5 @@
-// Package gmstripe implements GoMerchant payment gateway for Stripe.
-//
-package gmstripe
+// Package stripe implements GoMerchant payment gateway for Stripe.
+package stripe
 
 import "github.com/qor/gomerchant"
 
