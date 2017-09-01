@@ -13,7 +13,7 @@ type PaymentGateway interface {
 	Query(transactionID string) (Transaction, error)
 }
 
-// Authorize Params
+// AuthorizeParams authorize params
 type AuthorizeParams struct {
 	Amount          uint64
 	Currency        string
@@ -26,6 +26,7 @@ type AuthorizeParams struct {
 	Params
 }
 
+// AuthorizeResponse authorize response
 type AuthorizeResponse struct {
 	TransactionID  string
 	HandleRequest  bool                                                   // need process request after authorize or not
@@ -33,42 +34,46 @@ type AuthorizeResponse struct {
 	Params
 }
 
-// Complete Authorize
+// CompleteAuthorizeParams complete authorize params
 type CompleteAuthorizeParams struct {
 	Params
 }
 
+// CompleteAuthorizeResponse complete authorize response
 type CompleteAuthorizeResponse struct {
 	Params
 }
 
-// Capture Params
+// CaptureParams capture params
 type CaptureParams struct {
 	Params
 }
 
+// CaptureResponse capture response
 type CaptureResponse struct {
 	TransactionID string
 	Params
 }
 
-// Refund Params
+// RefundParams refund params
 type RefundParams struct {
 	Captured bool
 	Params
 }
 
+// RefundResponse refund response
 type RefundResponse struct {
 	TransactionID string
 	Params
 }
 
-// Void Params
+// VoidParams void params
 type VoidParams struct {
 	Captured bool
 	Params
 }
 
+// VoidResponse void response
 type VoidResponse struct {
 	TransactionID string
 	Params
