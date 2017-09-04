@@ -22,7 +22,19 @@ func (*Stripe) CreateCreditCard(creditCardParams gomerchant.CreateCreditCardPara
 }
 
 func (*Stripe) GetCreditCard(creditCardParams gomerchant.GetCreditCardParams) (gomerchant.GetCreditCardResponse, error) {
-	return gomerchant.GetCreditCardResponse{}, nil
+	c, err := card.Get(creditCardParams.CreditCardID, &stripe.CardParams{Customer: creditCardParams.CustomerID})
+
+	return gomerchant.GetCreditCardResponse{
+		CreditCard: &gomerchant.CustomerCreditCard{
+			CustomerID:   c.Customer.ID,
+			CustomerName: c.Name,
+			CreditCardID: c.ID,
+			MaskedNumber: c.LastFour,
+			ExpMonth:     uint(c.Month),
+			ExpYear:      uint(c.Year),
+			Brand:        string(c.Brand),
+		},
+	}, err
 }
 
 func (*Stripe) ListCreditCards(listCreditCardsParams gomerchant.ListCreditCardsParams) (gomerchant.ListCreditCardsResponse, error) {
