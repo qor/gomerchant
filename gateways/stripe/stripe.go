@@ -1,7 +1,11 @@
 // Package stripe implements GoMerchant payment gateway for Stripe.
 package stripe
 
-import "github.com/qor/gomerchant"
+import (
+	"github.com/qor/gomerchant"
+	stripe "github.com/stripe/stripe-go"
+	"github.com/stripe/stripe-go/charge"
+)
 
 // Stripe implements gomerchant.PaymetGateway interface.
 type Stripe struct {
@@ -23,7 +27,23 @@ func New(config *Config) *Stripe {
 }
 
 func (*Stripe) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
-	return gomerchant.AuthorizeResponse{}, nil
+	chargeParams := &stripe.ChargeParams{
+		Amount:    amount,
+		Currency:  stripe.Currency(params.Currency),
+		Desc:      params.Description,
+		NoCapture: true,
+	}
+	chargeParams.AddMeta("order_id", params.OrderID)
+
+	if params.PaymentMethod != nil {
+		if params.PaymentMethod.CreditCard == nil {
+			chargeParams.SetSource()
+		}
+		// TODO token
+	}
+
+	charge, err := charge.New(chargeParams)
+	return gomerchant.AuthorizeResponse{TransactionID: charge.ID}, err
 }
 
 func (*Stripe) CompleteAuthorize(paymentID string, params gomerchant.CompleteAuthorizeParams) (gomerchant.CompleteAuthorizeResponse, error) {
