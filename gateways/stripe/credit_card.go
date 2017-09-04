@@ -38,9 +38,24 @@ func (*Stripe) GetCreditCard(creditCardParams gomerchant.GetCreditCardParams) (g
 }
 
 func (*Stripe) ListCreditCards(listCreditCardsParams gomerchant.ListCreditCardsParams) (gomerchant.ListCreditCardsResponse, error) {
-	return gomerchant.ListCreditCardsResponse{}, nil
+	iter := card.List(&stripe.CardListParams{Customer: listCreditCardsParams.CustomerID})
+	resp := gomerchant.ListCreditCardsResponse{}
+	for iter.Next() {
+		c := iter.Card()
+		resp.CreditCards = append(resp.CreditCards, &gomerchant.CustomerCreditCard{
+			CustomerID:   c.Customer.ID,
+			CustomerName: c.Name,
+			CreditCardID: c.ID,
+			MaskedNumber: c.LastFour,
+			ExpMonth:     uint(c.Month),
+			ExpYear:      uint(c.Year),
+			Brand:        string(c.Brand),
+		})
+	}
+	return resp, iter.Err()
 }
 
 func (*Stripe) DeleteCreditCard(deleteCreditCardParams gomerchant.DeleteCreditCardParams) (gomerchant.DeleteCreditCardResponse, error) {
-	return gomerchant.DeleteCreditCardResponse{}, nil
+	_, err := card.Del(deleteCreditCardParams.CreditCardID, &stripe.CardParams{Customer: deleteCreditCardParams.CustomerID})
+	return gomerchant.DeleteCreditCardResponse{}, err
 }
