@@ -9,8 +9,9 @@ import (
 )
 
 type TestSuite struct {
-	CreditCardManager gomerchant.CreditCardManager
-	Gateway           gomerchant.PaymentGateway
+	CreditCardManager   gomerchant.CreditCardManager
+	Gateway             gomerchant.PaymentGateway
+	GetRandomCustomerID func() string
 }
 
 func (testSuite TestSuite) TestAll(t *testing.T) {
@@ -28,7 +29,7 @@ func (testSuite TestSuite) TestAll(t *testing.T) {
 
 func (testSuite TestSuite) createSavedCreditCard() (gomerchant.CreditCardResponse, error) {
 	return testSuite.CreditCardManager.CreateCreditCard(gomerchant.CreateCreditCardParams{
-		CustomerID: fmt.Sprint(time.Now().Unix()),
+		CustomerID: testSuite.GetRandomCustomerID(),
 		CreditCard: &gomerchant.CreditCard{
 			Name:     "JCB Card",
 			Number:   "3580876521284076",

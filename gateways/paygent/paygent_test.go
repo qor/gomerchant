@@ -50,6 +50,9 @@ func TestTestSuite(t *testing.T) {
 	tests.TestSuite{
 		CreditCardManager: Paygent,
 		Gateway:           Paygent,
+		GetRandomCustomerID: func() string {
+			return fmt.Sprint(time.Now().Unix())
+		},
 	}.TestAll(t)
 }
 
