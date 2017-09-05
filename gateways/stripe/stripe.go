@@ -78,7 +78,18 @@ func (*Stripe) Void(transactionID string, params gomerchant.VoidParams) (gomerch
 }
 
 func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {
-	return gomerchant.Transaction{}, nil
+	c, err := charge.Get(transactionID, nil)
+	transaction := gomerchant.Transaction{
+		ID:        c.ID,
+		Amount:    int(c.Amount),
+		Currency:  string(c.Currency),
+		Captured:  c.Captured,
+		Paid:      c.Paid,
+		Cancelled: c.Refunded,
+		Status:    c.Status,
+	}
+
+	return transaction, err
 }
 
 func toStripeCC(customer string, cc *gomerchant.CreditCard, billingAddress *gomerchant.Address) *stripe.CardParams {
