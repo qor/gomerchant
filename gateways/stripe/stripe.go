@@ -70,7 +70,11 @@ func (*Stripe) Refund(transactionID string, amount uint, params gomerchant.Refun
 }
 
 func (*Stripe) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
-	return gomerchant.VoidResponse{}, nil
+	refundParams := &stripe.RefundParams{
+		Charge: transactionID,
+	}
+	_, err := refund.New(refundParams)
+	return gomerchant.VoidResponse{TransactionID: transactionID}, err
 }
 
 func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {
