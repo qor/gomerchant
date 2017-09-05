@@ -2,9 +2,12 @@
 package stripe
 
 import (
+	"fmt"
+
 	"github.com/qor/gomerchant"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/charge"
+	"github.com/stripe/stripe-go/refund"
 )
 
 // Stripe implements gomerchant.PaymetGateway interface.
@@ -53,11 +56,17 @@ func (*Stripe) CompleteAuthorize(paymentID string, params gomerchant.CompleteAut
 }
 
 func (*Stripe) Capture(transactionID string, params gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {
-	return gomerchant.CaptureResponse{}, nil
+	_, err := charge.Capture(transactionID, nil)
+	return gomerchant.CaptureResponse{TransactionID: transactionID}, err
 }
 
 func (*Stripe) Refund(transactionID string, amount uint, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
-	return gomerchant.RefundResponse{}, nil
+	refundParams := &stripe.RefundParams{
+		Charge: transactionID,
+		Amount: uint64(amount),
+	}
+	_, err := refund.New(refundParams)
+	return gomerchant.RefundResponse{TransactionID: transactionID}, err
 }
 
 func (*Stripe) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
@@ -73,8 +82,8 @@ func toStripeCC(customer string, cc *gomerchant.CreditCard, billingAddress *gome
 		Customer: customer,
 		Name:     cc.Name,
 		Number:   cc.Number,
-		Month:    cc.ExpMonth,
-		Year:     cc.ExpYear,
+		Month:    fmt.Sprint(cc.ExpMonth),
+		Year:     fmt.Sprint(cc.ExpYear),
 		CVC:      cc.CVC,
 	}
 
