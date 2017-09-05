@@ -21,6 +21,8 @@ type Config struct {
 
 // New creates Stripe struct.
 func New(config *Config) *Stripe {
+	stripe.Key = config.Key
+
 	return &Stripe{
 		Config: config,
 	}
@@ -37,7 +39,7 @@ func (*Stripe) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gome
 
 	if params.PaymentMethod != nil {
 		if params.PaymentMethod.CreditCard == nil {
-			chargeParams.SetSource()
+			chargeParams.SetSource(toStripeCC(params.Customer, params.PaymentMethod.CreditCard, params.BillingAddress))
 		}
 		// TODO token
 	}
@@ -64,4 +66,26 @@ func (*Stripe) Void(transactionID string, params gomerchant.VoidParams) (gomerch
 
 func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {
 	return gomerchant.Transaction{}, nil
+}
+
+func toStripeCC(customer string, cc *gomerchant.CreditCard, billingAddress *gomerchant.Address) *stripe.CardParams {
+	cm := stripe.CardParams{
+		Customer: customer,
+		Name:     cc.Name,
+		Number:   cc.Number,
+		Month:    cc.ExpMonth,
+		Year:     cc.ExpYear,
+		CVC:      cc.CVC,
+	}
+
+	if billingAddress != nil {
+		cm.Address1 = billingAddress.Address1
+		cm.Address2 = billingAddress.Address2
+		cm.City = billingAddress.City
+		cm.State = billingAddress.State
+		cm.Zip = billingAddress.ZIP
+		cm.Country = billingAddress.Country
+	}
+
+	return &cm
 }
