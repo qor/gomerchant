@@ -32,7 +32,7 @@ func (testSuite TestSuite) createSavedCreditCard() (gomerchant.CreditCardRespons
 		CustomerID: testSuite.GetRandomCustomerID(),
 		CreditCard: &gomerchant.CreditCard{
 			Name:     "JCB Card",
-			Number:   "3580876521284076",
+			Number:   "3530111333300000",
 			ExpMonth: 1,
 			ExpYear:  uint(time.Now().Year() + 1),
 		},
