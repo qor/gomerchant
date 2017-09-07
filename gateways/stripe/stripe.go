@@ -3,6 +3,7 @@ package stripe
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/qor/gomerchant"
 	stripe "github.com/stripe/stripe-go"
@@ -95,6 +96,7 @@ func (*Stripe) Void(transactionID string, params gomerchant.VoidParams) (gomerch
 
 func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {
 	c, err := charge.Get(transactionID, nil)
+	created := time.Unix(c.Created, 0)
 	transaction := gomerchant.Transaction{
 		ID:        c.ID,
 		Amount:    int(c.Amount - c.AmountRefunded),
@@ -103,6 +105,7 @@ func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {
 		Paid:      c.Paid,
 		Cancelled: c.Refunded,
 		Status:    c.Status,
+		CreatedAt: &created,
 	}
 
 	if transaction.Cancelled {
