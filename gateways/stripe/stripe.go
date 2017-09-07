@@ -105,6 +105,11 @@ func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {
 		Status:    c.Status,
 	}
 
+	if transaction.Cancelled {
+		transaction.Paid = false
+		transaction.Captured = false
+	}
+
 	return transaction, err
 }
 
