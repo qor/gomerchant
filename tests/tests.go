@@ -51,8 +51,8 @@ func (testSuite TestSuite) TestAuthorizeAndCapture(t *testing.T) {
 		OrderID:  fmt.Sprint(time.Now().Unix()),
 		PaymentMethod: &gomerchant.PaymentMethod{
 			CreditCard: &gomerchant.CreditCard{
-				Name:     "JCB Card",
-				Number:   "3580876521284076",
+				Name:     "VISA",
+				Number:   "4242424242424242",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
 			},
@@ -101,8 +101,8 @@ func (testSuite TestSuite) createAuth() gomerchant.AuthorizeResponse {
 		OrderID:  fmt.Sprint(time.Now().Unix()),
 		PaymentMethod: &gomerchant.PaymentMethod{
 			CreditCard: &gomerchant.CreditCard{
-				Name:     "JCB Card",
-				Number:   "3580876521284076",
+				Name:     "VISA",
+				Number:   "4242424242424242",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
 			},
@@ -194,8 +194,8 @@ func (testSuite TestSuite) TestListCreditCards(t *testing.T) {
 		testSuite.CreditCardManager.CreateCreditCard(gomerchant.CreateCreditCardParams{
 			CustomerID: response.CustomerID,
 			CreditCard: &gomerchant.CreditCard{
-				Name:     "JCB Card",
-				Number:   "3580876521284076",
+				Name:     "VISA",
+				Number:   "4242424242424242",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
 			},
