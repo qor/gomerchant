@@ -31,8 +31,8 @@ func (testSuite TestSuite) createSavedCreditCard() (gomerchant.CreditCardRespons
 	return testSuite.CreditCardManager.CreateCreditCard(gomerchant.CreateCreditCardParams{
 		CustomerID: testSuite.GetRandomCustomerID(),
 		CreditCard: &gomerchant.CreditCard{
-			Name:     "JCB Card",
-			Number:   "3530111333300000",
+			Name:     "VISA",
+			Number:   "4242424242424242",
 			ExpMonth: 1,
 			ExpYear:  uint(time.Now().Year() + 1),
 		},

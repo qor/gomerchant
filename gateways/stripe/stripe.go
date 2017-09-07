@@ -41,7 +41,7 @@ func (*Stripe) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gome
 	chargeParams.AddMeta("order_id", params.OrderID)
 
 	if params.PaymentMethod != nil {
-		if params.PaymentMethod.CreditCard == nil {
+		if params.PaymentMethod.CreditCard != nil {
 			chargeParams.SetSource(toStripeCC(params.Customer, params.PaymentMethod.CreditCard, params.BillingAddress))
 		}
 		// TODO token
