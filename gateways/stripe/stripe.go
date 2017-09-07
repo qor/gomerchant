@@ -48,7 +48,10 @@ func (*Stripe) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gome
 	}
 
 	charge, err := charge.New(chargeParams)
-	return gomerchant.AuthorizeResponse{TransactionID: charge.ID}, err
+	if charge != nil {
+		return gomerchant.AuthorizeResponse{TransactionID: charge.ID}, err
+	}
+	return gomerchant.AuthorizeResponse{}, err
 }
 
 func (*Stripe) CompleteAuthorize(paymentID string, params gomerchant.CompleteAuthorizeParams) (gomerchant.CompleteAuthorizeResponse, error) {
