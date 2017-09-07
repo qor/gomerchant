@@ -18,15 +18,20 @@ func (*Stripe) CreateCreditCard(creditCardParams gomerchant.CreateCreditCardPara
 		CVC:      creditCardParams.CreditCard.CVC,
 	})
 
-	return gomerchant.CreditCardResponse{CustomerID: c.Customer.ID, CreditCardID: c.ID}, err
+	resp := gomerchant.CreditCardResponse{CreditCardID: c.ID}
+
+	if c.Customer != nil {
+		resp.CustomerID = c.Customer.ID
+	}
+
+	return resp, err
 }
 
 func (*Stripe) GetCreditCard(creditCardParams gomerchant.GetCreditCardParams) (gomerchant.GetCreditCardResponse, error) {
 	c, err := card.Get(creditCardParams.CreditCardID, &stripe.CardParams{Customer: creditCardParams.CustomerID})
 
-	return gomerchant.GetCreditCardResponse{
+	resp := gomerchant.GetCreditCardResponse{
 		CreditCard: &gomerchant.CustomerCreditCard{
-			CustomerID:   c.Customer.ID,
 			CustomerName: c.Name,
 			CreditCardID: c.ID,
 			MaskedNumber: c.LastFour,
@@ -34,7 +39,13 @@ func (*Stripe) GetCreditCard(creditCardParams gomerchant.GetCreditCardParams) (g
 			ExpYear:      uint(c.Year),
 			Brand:        string(c.Brand),
 		},
-	}, err
+	}
+
+	if c.Customer != nil {
+		resp.CreditCard.CustomerID = c.Customer.ID
+	}
+
+	return resp, err
 }
 
 func (*Stripe) ListCreditCards(listCreditCardsParams gomerchant.ListCreditCardsParams) (gomerchant.ListCreditCardsResponse, error) {
@@ -42,15 +53,20 @@ func (*Stripe) ListCreditCards(listCreditCardsParams gomerchant.ListCreditCardsP
 	resp := gomerchant.ListCreditCardsResponse{}
 	for iter.Next() {
 		c := iter.Card()
-		resp.CreditCards = append(resp.CreditCards, &gomerchant.CustomerCreditCard{
-			CustomerID:   c.Customer.ID,
+		customerCreditCard := &gomerchant.CustomerCreditCard{
 			CustomerName: c.Name,
 			CreditCardID: c.ID,
 			MaskedNumber: c.LastFour,
 			ExpMonth:     uint(c.Month),
 			ExpYear:      uint(c.Year),
 			Brand:        string(c.Brand),
-		})
+		}
+
+		if c.Customer != nil {
+			customerCreditCard.CustomerID = c.Customer.ID
+		}
+
+		resp.CreditCards = append(resp.CreditCards, customerCreditCard)
 	}
 	return resp, iter.Err()
 }
