@@ -218,7 +218,7 @@ func (testSuite TestSuite) TestListCreditCards(t *testing.T) {
 }
 
 func (testSuite TestSuite) TestListCreditCardsWithNoResult(t *testing.T) {
-	if response, err := testSuite.CreditCardManager.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: fmt.Sprint(time.Now().Unix()) + "none"}); err != nil {
+	if response, err := testSuite.CreditCardManager.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: testSuite.GetRandomCustomerID()}); err != nil {
 		t.Errorf("should not return error, but got %v", err)
 	} else if len(response.CreditCards) != 0 {
 		t.Errorf("credit card's count should be zero")

@@ -45,6 +45,7 @@ func (*Stripe) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gome
 			chargeParams.SetSource(toStripeCC(params.Customer, params.PaymentMethod.CreditCard, params.BillingAddress))
 		}
 		if params.PaymentMethod.SavedCreditCard != nil {
+			chargeParams.Customer = params.PaymentMethod.SavedCreditCard.CustomerID
 			chargeParams.SetSource(params.PaymentMethod.SavedCreditCard.CreditCardID)
 		}
 	}
@@ -65,12 +66,22 @@ func (*Stripe) Capture(transactionID string, params gomerchant.CaptureParams) (g
 	return gomerchant.CaptureResponse{TransactionID: transactionID}, err
 }
 
-func (*Stripe) Refund(transactionID string, amount uint, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
-	refundParams := &stripe.RefundParams{
-		Charge: transactionID,
-		Amount: uint64(amount),
+func (s *Stripe) Refund(transactionID string, amount uint, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
+	transaction, err := s.Query(transactionID)
+
+	if err == nil {
+		if transaction.Captured {
+			_, err = refund.New(&stripe.RefundParams{
+				Charge: transactionID,
+				Amount: uint64(amount),
+			})
+		} else {
+			_, err = charge.Capture(transactionID, &stripe.CaptureParams{
+				Amount: uint64(transaction.Amount - int(amount)),
+			})
+		}
 	}
-	_, err := refund.New(refundParams)
+
 	return gomerchant.RefundResponse{TransactionID: transactionID}, err
 }
 
@@ -86,7 +97,7 @@ func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {
 	c, err := charge.Get(transactionID, nil)
 	transaction := gomerchant.Transaction{
 		ID:        c.ID,
-		Amount:    int(c.Amount),
+		Amount:    int(c.Amount - c.AmountRefunded),
 		Currency:  string(c.Currency),
 		Captured:  c.Captured,
 		Paid:      c.Paid,
