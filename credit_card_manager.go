@@ -51,7 +51,7 @@ type ListCreditCardsResponse struct {
 	Params
 }
 
-// CustomerCard
+// CustomerCreditCard CustomerCard defination
 type CustomerCreditCard struct {
 	CustomerID   string
 	CustomerName string
