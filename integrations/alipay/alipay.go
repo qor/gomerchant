@@ -13,7 +13,7 @@ type Alipay struct {
 
 // Config alipay config
 type Config struct {
-	APPID          string `required:"true"`
+	AppID          string `required:"true"`
 	PrivateKey     string `required:"true"`
 	PublicKey      string `required:"true"`
 	ProductionMode bool
@@ -26,6 +26,21 @@ func New(config *Config) *Alipay {
 	return &Alipay{
 		Config: config,
 	}
+}
+
+// Common alipay common params
+type Common struct {
+	AppID      string
+	Method     string
+	Format     string
+	ReturnURL  string
+	Charset    string
+	SignType   string
+	Sign       string
+	Timestamp  string
+	Version    string
+	NotifyURL  string
+	BizContent map[string]string
 }
 
 // CheckoutURL generate CheckoutURL for alipay
