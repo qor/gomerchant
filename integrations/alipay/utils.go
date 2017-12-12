@@ -1,24 +1,25 @@
 package alipay
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 )
 
 // Common alipay common params
 type Common struct {
-	AppID        string            `json:"app_id"`
-	Method       string            `json:"method"`
-	Format       string            `json:"format"`
-	Charset      string            `json:"charset"`
-	SignType     string            `json:"sign_type"`
-	Sign         string            `json:"-"`
-	Timestamp    string            `json:"timestamp"`
-	Version      string            `json:"version"`
-	ReturnURL    string            `json:"return_url"`
-	NotifyURL    string            `json:"notify_url"`
-	AppAuthToken string            `json:"app_auth_token"`
-	BizContent   map[string]string `json:"-"`
+	AppID        string      `json:"app_id"`
+	Method       string      `json:"method"`
+	Format       string      `json:"format"`
+	Charset      string      `json:"charset"`
+	SignType     string      `json:"sign_type"`
+	Sign         string      `json:"-"`
+	Timestamp    string      `json:"timestamp"`
+	Version      string      `json:"version"`
+	ReturnURL    string      `json:"return_url"`
+	NotifyURL    string      `json:"notify_url"`
+	AppAuthToken string      `json:"app_auth_token"`
+	BizContent   interface{} `json:"biz_content"`
 }
 
 // Sign common  params
@@ -50,4 +51,12 @@ func (alipay *Alipay) Sign(common *Common, availableAttrs ...string) error {
 	if common.Version == "" {
 		common.Version = "1.0"
 	}
+
+	params := map[string]string{}
+	result, err := json.Marshal(&params)
+	if err == nil {
+		err = json.Unmarshal(result, params)
+	}
+
+	return err
 }
