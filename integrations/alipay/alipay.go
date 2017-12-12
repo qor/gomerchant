@@ -28,26 +28,6 @@ func New(config *Config) *Alipay {
 	}
 }
 
-// Common alipay common params
-type Common struct {
-	AppID        string
-	Method       string
-	Format       string
-	Charset      string
-	SignType     string
-	Sign         string
-	Timestamp    string
-	Version      string
-	ReturnURL    string
-	NotifyURL    string
-	AppAuthToken string
-	BizContent   map[string]string
-}
-
-// Sign common  params
-func (*Alipay) Sign(common *Common, availableAttrs ...string) error {
-}
-
 // CheckoutURL generate CheckoutURL for alipay
 func (*Alipay) CheckoutURL(params gomerchant.CheckoutParams) (string, error) {
 	return "", nil
