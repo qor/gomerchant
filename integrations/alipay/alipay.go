@@ -92,6 +92,30 @@ func (*Alipay) VerifyNotification(req *http.Request) (bool, error) {
 
 // Refund refund transaction
 func (*Alipay) Refund(transactionID string, amount uint, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
+	type Params struct {
+		OutTradeNo   string `json:"out_trade_no,omitempty"`
+		TradeNo      string `json:"trade_no,omitempty"`
+		RefundAmount uint   `json:"refund_amount"`
+		RefundReason string `json:"refund_reason,omitempty"`
+		OutRequestNo string `json:"out_request_no,omitempty"`
+		OperatorID   string `json:"operator_id,omitempty"`
+		StoreID      string `json:"store_id,omitempty"`
+		TerminalID   string `json:"terminal_id,omitempty"`
+	}
+
+	var currentParams Params
+
+	if params.Params != nil {
+		if result, err := json.Marshal(params.Params); err == nil {
+			json.Unmarshal(result, &currentParams)
+		}
+	}
+
+	currentParams.RefundAmount = amount
+	currentParams.OutTradeNo = transactionID
+
+	// Do really request & error check
+
 	return gomerchant.RefundResponse{}, nil
 }
 
