@@ -1,6 +1,7 @@
 package alipay
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/qor/gomerchant"
@@ -64,6 +65,12 @@ func (alipay *Alipay) CheckoutURL(params gomerchant.CheckoutParams) (string, err
 
 	var currentParams Params
 
+	if params.Params != nil {
+		if result, err := json.Marshal(params.Params); err == nil {
+			json.Unmarshal(result, &currentParams)
+		}
+	}
+
 	currentParams.TotalAmount = params.Amount
 	currentParams.OutTradeNo = params.OrderID
 	currentParams.Subject = params.Description
@@ -75,7 +82,7 @@ func (alipay *Alipay) CheckoutURL(params gomerchant.CheckoutParams) (string, err
 
 	query, err := alipay.Sign(&checkoutParams)
 
-	return config.APIDomain + "?" + query, err
+	return alipay.Config.APIDomain + "?" + query, err
 }
 
 // VerifyNotification verify notification
