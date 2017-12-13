@@ -64,12 +64,13 @@ func (alipay *Alipay) Sign(common *Common, availableAttrs ...string) error {
 	result, err := json.Marshal(&params)
 	if err == nil {
 		err = json.Unmarshal(result, params)
+		common.Sign, err = alipay.sign(params)
 	}
 
 	return err
 }
 
-func (alipay *Alipay) signRSA2(params map[string]string) (s string, err error) {
+func (alipay *Alipay) sign(params map[string]string) (s string, err error) {
 	if alipay.Config.PrivateKey == "" {
 		return "", errors.New("invalid private key")
 	}
@@ -91,14 +92,12 @@ func (alipay *Alipay) signRSA2(params map[string]string) (s string, err error) {
 
 		sort.Strings(apiParams)
 
-		apiQuery := strings.Join(apiParams, "&")
-
-		var hash crypto.Hash = crypto.SHA256
+		hash := crypto.SHA256
 		if v, ok := params["sign_type"]; ok && v == "RSA" {
 			hash = crypto.SHA1
 		}
 		h := hash.New()
-		h.Write([]byte(apiQuery))
+		h.Write([]byte(strings.Join(apiParams, "&")))
 		hashed := h.Sum(nil)
 
 		s, err := rsa.SignPKCS1v15(rand.Reader, rsaPrivateKey, hash, hashed)
