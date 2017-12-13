@@ -1,6 +1,7 @@
 package alipay
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -48,7 +49,7 @@ func (alipay *Alipay) Sign(common *Common, availableAttrs ...string) error {
 	}
 
 	if common.SignType == "" {
-		commont.SignType = "RSA2"
+		common.SignType = "RSA2"
 	}
 
 	if common.Timestamp == "" {
@@ -73,7 +74,7 @@ func (alipay *Alipay) signRSA2(params map[string]string) (s string, err error) {
 		return "", errors.New("invalid private key")
 	}
 
-	block, _ := pem.Decode(privateKey)
+	block, _ := pem.Decode([]byte(alipay.Config.PrivateKey))
 	if block == nil {
 		return "", errors.New("invalid private key")
 	}
@@ -92,8 +93,12 @@ func (alipay *Alipay) signRSA2(params map[string]string) (s string, err error) {
 
 		apiQuery := strings.Join(apiParams, "&")
 
+		var hash crypto.Hash = crypto.SHA256
+		if v, ok := params["sign_type"]; ok && v == "RSA" {
+			hash = crypto.SHA1
+		}
 		h := hash.New()
-		h.Write(apiQuery)
+		h.Write([]byte(apiQuery))
 		hashed := h.Sum(nil)
 
 		s, err := rsa.SignPKCS1v15(rand.Reader, rsaPrivateKey, hash, hashed)
