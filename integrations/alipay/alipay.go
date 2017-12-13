@@ -143,5 +143,14 @@ func (*Alipay) Void(transactionID string, params gomerchant.VoidParams) (gomerch
 
 // Query query transaction
 func (*Alipay) Query(transactionID string) (gomerchant.Transaction, error) {
+	type Params struct {
+		OutTradeNo string `json:"out_trade_no,omitempty"`
+		TradeNo    string `json:"trade_no,omitempty"`
+	}
+
+	currentParams := Params{OutTradeNo: transactionID}
+
+	// TODO Do really request & error check
+
 	return gomerchant.Transaction{}, nil
 }
