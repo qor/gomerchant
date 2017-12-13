@@ -45,7 +45,7 @@ func New(config *Config) *Alipay {
 
 // CheckoutURL generate CheckoutURL for alipay
 func (alipay *Alipay) CheckoutURL(params gomerchant.CheckoutParams) (string, error) {
-	type Params struct {
+	type BizParams struct {
 		OutTradeNo         string `json:"out_trade_no"`
 		ProductCode        string `json:"product_code"`
 		TotalAmount        uint64 `json:"total_amount"`
@@ -63,7 +63,7 @@ func (alipay *Alipay) CheckoutURL(params gomerchant.CheckoutParams) (string, err
 		QRWidth            string `json:"qrcode_width,omitempty"`
 	}
 
-	var currentParams Params
+	var currentParams BizParams
 
 	if params.Params != nil {
 		if result, err := json.Marshal(params.Params); err == nil {
@@ -92,7 +92,7 @@ func (*Alipay) VerifyNotification(req *http.Request) (bool, error) {
 
 // Refund refund transaction
 func (*Alipay) Refund(transactionID string, amount uint, params gomerchant.RefundParams) (gomerchant.RefundResponse, error) {
-	type Params struct {
+	type BizParams struct {
 		OutTradeNo   string `json:"out_trade_no,omitempty"`
 		TradeNo      string `json:"trade_no,omitempty"`
 		RefundAmount uint   `json:"refund_amount"`
@@ -103,7 +103,7 @@ func (*Alipay) Refund(transactionID string, amount uint, params gomerchant.Refun
 		TerminalID   string `json:"terminal_id,omitempty"`
 	}
 
-	var currentParams Params
+	var currentParams BizParams
 
 	if params.Params != nil {
 		if result, err := json.Marshal(params.Params); err == nil {
@@ -121,13 +121,13 @@ func (*Alipay) Refund(transactionID string, amount uint, params gomerchant.Refun
 
 // Void void transaction
 func (*Alipay) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
-	type Params struct {
+	type BizParams struct {
 		OutTradeNo string `json:"out_trade_no,omitempty"`
 		TradeNo    string `json:"trade_no,omitempty"`
 		OperatorID string `json:"operator_id,omitempty"`
 	}
 
-	var currentParams Params
+	var currentParams BizParams
 	if params.Params != nil {
 		if result, err := json.Marshal(params.Params); err == nil {
 			json.Unmarshal(result, &currentParams)
@@ -143,12 +143,12 @@ func (*Alipay) Void(transactionID string, params gomerchant.VoidParams) (gomerch
 
 // Query query transaction
 func (*Alipay) Query(transactionID string) (gomerchant.Transaction, error) {
-	type Params struct {
+	type BizParams struct {
 		OutTradeNo string `json:"out_trade_no,omitempty"`
 		TradeNo    string `json:"trade_no,omitempty"`
 	}
 
-	currentParams := Params{OutTradeNo: transactionID}
+	currentParams := BizParams{OutTradeNo: transactionID}
 
 	// TODO Do really request & error check
 

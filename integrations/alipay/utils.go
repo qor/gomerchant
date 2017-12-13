@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-// Common alipay common params
-type Common struct {
+// Params alipay common params
+type Params struct {
 	AppID        string      `json:"app_id"`
 	Method       string      `json:"method"`
 	Format       string      `json:"format"`
@@ -31,44 +31,44 @@ type Common struct {
 }
 
 // Sign common  params
-func (alipay *Alipay) Sign(common *Common) (string, error) {
-	if common.Method == "" {
+func (alipay *Alipay) Sign(params *Params) (string, error) {
+	if params.Method == "" {
 		return "", errors.New("method is invalid")
 	}
 
-	if common.AppID == "" {
-		common.AppID = alipay.Config.AppID
+	if params.AppID == "" {
+		params.AppID = alipay.Config.AppID
 	}
 
-	if common.Format == "" {
-		common.Format = "JSON"
+	if params.Format == "" {
+		params.Format = "JSON"
 	}
 
-	if common.Charset == "" {
-		common.Version = "utf-8"
+	if params.Charset == "" {
+		params.Version = "utf-8"
 	}
 
-	if common.SignType == "" {
-		common.SignType = "RSA2"
+	if params.SignType == "" {
+		params.SignType = "RSA2"
 	}
 
-	if common.Timestamp == "" {
-		common.Timestamp = time.Now().Format("2006-01-02 15:04:05")
+	if params.Timestamp == "" {
+		params.Timestamp = time.Now().Format("2006-01-02 15:04:05")
 	}
 
-	if common.Version == "" {
-		common.Version = "1.0"
+	if params.Version == "" {
+		params.Version = "1.0"
 	}
 
-	params := map[string]string{}
+	reqParams := map[string]string{}
 	result, err := json.Marshal(&params)
 	if err == nil {
-		err = json.Unmarshal(result, params)
-		common.Sign, err = alipay.sign(params)
-		params["sign"] = common.Sign
+		err = json.Unmarshal(result, reqParams)
+		params.Sign, err = alipay.sign(reqParams)
+		reqParams["sign"] = params.Sign
 	}
 
-	return toSortedQuery(params), err
+	return toSortedQuery(reqParams), err
 }
 
 func (alipay *Alipay) sign(params map[string]string) (s string, err error) {
