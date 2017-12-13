@@ -6,6 +6,11 @@ import (
 	"github.com/qor/gomerchant"
 )
 
+var (
+	APIDomain    = "https://openapi.alipay.com/gateway.do"
+	DevAPIDomain = "https://openapi.alipaydev.com/gateway.do"
+)
+
 // Alipay alipay struct
 type Alipay struct {
 	Config *Config
@@ -17,12 +22,21 @@ type Config struct {
 	PrivateKey     string `required:"true"`
 	PublicKey      string `required:"true"`
 	ProductionMode bool
+	APIDomain      string
 }
 
 var _ gomerchant.IntegrationGateway = &Alipay{}
 
 // New initialize alipay
 func New(config *Config) *Alipay {
+	if config.APIDomain == "" {
+		if config.ProductionMode {
+			config.APIDomain = APIDomain
+		} else {
+			config.APIDomain = DevAPIDomain
+		}
+	}
+
 	return &Alipay{
 		Config: config,
 	}
@@ -61,7 +75,7 @@ func (alipay *Alipay) CheckoutURL(params gomerchant.CheckoutParams) (string, err
 
 	query, err := alipay.Sign(&checkoutParams)
 
-	return query, err
+	return config.APIDomain + "?" + query, err
 }
 
 // VerifyNotification verify notification
