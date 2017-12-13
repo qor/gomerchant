@@ -114,13 +114,30 @@ func (*Alipay) Refund(transactionID string, amount uint, params gomerchant.Refun
 	currentParams.RefundAmount = amount
 	currentParams.OutTradeNo = transactionID
 
-	// Do really request & error check
+	// TODO Do really request & error check
 
 	return gomerchant.RefundResponse{}, nil
 }
 
 // Void void transaction
 func (*Alipay) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
+	type Params struct {
+		OutTradeNo string `json:"out_trade_no,omitempty"`
+		TradeNo    string `json:"trade_no,omitempty"`
+		OperatorID string `json:"operator_id,omitempty"`
+	}
+
+	var currentParams Params
+	if params.Params != nil {
+		if result, err := json.Marshal(params.Params); err == nil {
+			json.Unmarshal(result, &currentParams)
+		}
+	}
+
+	currentParams.OutTradeNo = transactionID
+
+	// TODO Do really request & error check
+
 	return gomerchant.VoidResponse{}, nil
 }
 
