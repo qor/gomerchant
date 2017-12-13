@@ -31,9 +31,9 @@ type Common struct {
 }
 
 // Sign common  params
-func (alipay *Alipay) Sign(common *Common, availableAttrs ...string) error {
+func (alipay *Alipay) Sign(common *Common) (string, error) {
 	if common.Method == "" {
-		return errors.New("method is invalid")
+		return "", errors.New("method is invalid")
 	}
 
 	if common.AppID == "" {
@@ -65,9 +65,10 @@ func (alipay *Alipay) Sign(common *Common, availableAttrs ...string) error {
 	if err == nil {
 		err = json.Unmarshal(result, params)
 		common.Sign, err = alipay.sign(params)
+		params["sign"] = common.Sign
 	}
 
-	return err
+	return toSortedQuery(params), err
 }
 
 func (alipay *Alipay) sign(params map[string]string) (s string, err error) {
@@ -82,22 +83,12 @@ func (alipay *Alipay) sign(params map[string]string) (s string, err error) {
 
 	rsaPrivateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err == nil {
-		apiParams := []string{}
-
-		for key, value := range params {
-			if len(value) > 0 {
-				apiParams = append(apiParams, key+"="+value)
-			}
-		}
-
-		sort.Strings(apiParams)
-
 		hash := crypto.SHA256
 		if v, ok := params["sign_type"]; ok && v == "RSA" {
 			hash = crypto.SHA1
 		}
 		h := hash.New()
-		h.Write([]byte(strings.Join(apiParams, "&")))
+		h.Write([]byte(toSortedQuery(params)))
 		hashed := h.Sum(nil)
 
 		s, err := rsa.SignPKCS1v15(rand.Reader, rsaPrivateKey, hash, hashed)
@@ -105,4 +96,17 @@ func (alipay *Alipay) sign(params map[string]string) (s string, err error) {
 	}
 
 	return "", err
+}
+
+func toSortedQuery(params map[string]string) string {
+	apiParams := []string{}
+
+	for key, value := range params {
+		if len(value) > 0 {
+			apiParams = append(apiParams, key+"="+value)
+		}
+	}
+
+	sort.Strings(apiParams)
+	return strings.Join(apiParams, "&")
 }
