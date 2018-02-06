@@ -22,6 +22,8 @@ import (
 	"github.com/qor/gomerchant"
 )
 
+var _ gomerchant.PaymentGateway = &Paygent{}
+
 type Paygent struct {
 	Config *Config
 }
