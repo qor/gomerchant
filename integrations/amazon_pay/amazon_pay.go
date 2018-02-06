@@ -7,12 +7,11 @@ type AmazonPay struct {
 
 // Config amazon pay configuration
 type Config struct {
-	MerchantID   string
-	AccessKey    string
-	SecretKey    string
-	Region       string
-	CurrencyCode string
-
+	MerchantID     string
+	AccessKey      string
+	SecretKey      string
+	Region         string
+	CurrencyCode   string
 	ProductionMode bool
 }
 
