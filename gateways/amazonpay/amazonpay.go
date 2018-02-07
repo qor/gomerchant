@@ -14,6 +14,8 @@ type Config struct {
 	MerchantID     string
 	AccessKey      string
 	SecretKey      string
+	ClientID       string
+	ClientSecret   string
 	Region         string
 	CurrencyCode   string
 	ProductionMode bool
