@@ -39,7 +39,7 @@ func (*Stripe) GetCreditCard(creditCardParams gomerchant.GetCreditCardParams) (g
 		CreditCard: &gomerchant.CustomerCreditCard{
 			CustomerName: c.Name,
 			CreditCardID: c.ID,
-			MaskedNumber: fmt.Sprint(c.CVCCheck),
+			MaskedNumber: fmt.Sprint(c.Last4),
 			ExpMonth:     uint(c.ExpMonth),
 			ExpYear:      uint(c.ExpYear),
 			Brand:        string(c.Brand),
@@ -61,7 +61,7 @@ func (*Stripe) ListCreditCards(listCreditCardsParams gomerchant.ListCreditCardsP
 		customerCreditCard := &gomerchant.CustomerCreditCard{
 			CustomerName: c.Name,
 			CreditCardID: c.ID,
-			MaskedNumber: fmt.Sprint(c.CVCCheck),
+			MaskedNumber: fmt.Sprint(c.Last4),
 			ExpMonth:     uint(c.ExpMonth),
 			ExpYear:      uint(c.ExpYear),
 			Brand:        string(c.Brand),
