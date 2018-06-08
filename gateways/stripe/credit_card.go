@@ -3,8 +3,6 @@ package stripe
 import (
 	"fmt"
 
-	"github.com/theplant/testingutils"
-
 	"github.com/qor/gomerchant"
 	stripe "github.com/stripe/stripe-go"
 	"github.com/stripe/stripe-go/card"
@@ -60,7 +58,6 @@ func (*Stripe) ListCreditCards(listCreditCardsParams gomerchant.ListCreditCardsP
 	resp := gomerchant.ListCreditCardsResponse{}
 	for iter.Next() {
 		c := iter.Card()
-		testingutils.PrintlnJson("string454", c)
 		customerCreditCard := &gomerchant.CustomerCreditCard{
 			CustomerName: c.Name,
 			CreditCardID: c.ID,
