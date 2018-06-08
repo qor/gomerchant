@@ -33,20 +33,21 @@ func New(config *Config) *Stripe {
 }
 
 func (*Stripe) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
+	int64Amount := int64(amount)
 	chargeParams := &stripe.ChargeParams{
-		Amount:    amount,
-		Currency:  stripe.Currency(params.Currency),
-		Desc:      params.Description,
-		NoCapture: true,
+		Amount:      &int64Amount,
+		Currency:    &params.Currency,
+		Description: &params.Description,
+		// Capture:     &false,
 	}
-	chargeParams.AddMeta("order_id", params.OrderID)
+	chargeParams.AddMetadata("order_id", params.OrderID)
 
 	if params.PaymentMethod != nil {
 		if params.PaymentMethod.CreditCard != nil {
 			chargeParams.SetSource(toStripeCC(params.Customer, params.PaymentMethod.CreditCard, params.BillingAddress))
 		}
 		if params.PaymentMethod.SavedCreditCard != nil {
-			chargeParams.Customer = params.PaymentMethod.SavedCreditCard.CustomerID
+			chargeParams.Customer = &params.PaymentMethod.SavedCreditCard.CustomerID
 			chargeParams.SetSource(params.PaymentMethod.SavedCreditCard.CreditCardID)
 		}
 	}
@@ -72,13 +73,15 @@ func (s *Stripe) Refund(transactionID string, amount uint, params gomerchant.Ref
 
 	if err == nil {
 		if transaction.Captured {
+			int64Amount := int64(amount)
 			_, err = refund.New(&stripe.RefundParams{
-				Charge: transactionID,
-				Amount: uint64(amount),
+				Charge: &transactionID,
+				Amount: &int64Amount,
 			})
 		} else {
+			int64Amount := int64(transaction.Amount - int(amount))
 			_, err = charge.Capture(transactionID, &stripe.CaptureParams{
-				Amount: uint64(transaction.Amount - int(amount)),
+				Amount: &int64Amount,
 			})
 		}
 	}
@@ -88,7 +91,7 @@ func (s *Stripe) Refund(transactionID string, amount uint, params gomerchant.Ref
 
 func (*Stripe) Void(transactionID string, params gomerchant.VoidParams) (gomerchant.VoidResponse, error) {
 	refundParams := &stripe.RefundParams{
-		Charge: transactionID,
+		Charge: &transactionID,
 	}
 	_, err := refund.New(refundParams)
 	return gomerchant.VoidResponse{TransactionID: transactionID}, err
@@ -117,22 +120,26 @@ func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {
 }
 
 func toStripeCC(customer string, cc *gomerchant.CreditCard, billingAddress *gomerchant.Address) *stripe.CardParams {
+	var (
+		expMonth = fmt.Sprint(cc.ExpMonth)
+		expYear  = fmt.Sprint(cc.ExpYear)
+	)
 	cm := stripe.CardParams{
-		Customer: customer,
-		Name:     cc.Name,
-		Number:   cc.Number,
-		Month:    fmt.Sprint(cc.ExpMonth),
-		Year:     fmt.Sprint(cc.ExpYear),
-		CVC:      cc.CVC,
+		Customer: &customer,
+		Name:     &cc.Name,
+		Number:   &cc.Number,
+		ExpMonth: &expMonth,
+		ExpYear:  &expYear,
+		CVC:      &cc.CVC,
 	}
 
 	if billingAddress != nil {
-		cm.Address1 = billingAddress.Address1
-		cm.Address2 = billingAddress.Address2
-		cm.City = billingAddress.City
-		cm.State = billingAddress.State
-		cm.Zip = billingAddress.ZIP
-		cm.Country = billingAddress.Country
+		cm.AddressLine1 = &billingAddress.Address1
+		cm.AddressLine1 = &billingAddress.Address2
+		cm.AddressCity = &billingAddress.City
+		cm.AddressState = &billingAddress.State
+		cm.AddressZip = &billingAddress.ZIP
+		cm.AddressCountry = &billingAddress.Country
 	}
 
 	return &cm
