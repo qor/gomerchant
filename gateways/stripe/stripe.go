@@ -32,13 +32,15 @@ func New(config *Config) *Stripe {
 	}
 }
 
+var capture bool = false
+
 func (*Stripe) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
 	int64Amount := int64(amount)
 	chargeParams := &stripe.ChargeParams{
 		Amount:      &int64Amount,
 		Currency:    &params.Currency,
 		Description: &params.Description,
-		// Capture:     &false,
+		Capture:     &capture,
 	}
 	chargeParams.AddMetadata("order_id", params.OrderID)
 
