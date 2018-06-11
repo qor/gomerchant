@@ -49,7 +49,9 @@ func (*Stripe) Authorize(amount uint64, params gomerchant.AuthorizeParams) (gome
 			chargeParams.SetSource(toStripeCC(params.Customer, params.PaymentMethod.CreditCard, params.BillingAddress))
 		}
 		if params.PaymentMethod.SavedCreditCard != nil {
-			chargeParams.Customer = &params.PaymentMethod.SavedCreditCard.CustomerID
+			if len(params.PaymentMethod.SavedCreditCard.CustomerID) > 0 {
+				chargeParams.Customer = &params.PaymentMethod.SavedCreditCard.CustomerID
+			}
 			chargeParams.SetSource(params.PaymentMethod.SavedCreditCard.CreditCardID)
 		}
 	}
