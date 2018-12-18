@@ -26,6 +26,7 @@ type Config struct {
 // New creates Stripe struct.
 func New(config *Config) *Stripe {
 	stripe.Key = config.Key
+	stripe.LogLevel = 3
 
 	return &Stripe{
 		Config: config,
