@@ -10,6 +10,7 @@ type PaymentGateway interface {
 	Refund(transactionID string, amount uint, params RefundParams) (RefundResponse, error)
 	Void(transactionID string, params VoidParams) (VoidResponse, error)
 
+	ConveniencePay(amount uint64, params ConveniencePayParams) (ConveniencePayResponse, error)
 	Query(transactionID string) (Transaction, error)
 }
 
@@ -76,5 +77,16 @@ type VoidParams struct {
 // VoidResponse void response
 type VoidResponse struct {
 	TransactionID string
+	Params
+}
+
+type ConveniencePayParams struct {
+	CvsType uint64
+}
+
+type ConveniencePayResponse struct {
+	ReceiptNumber string
+	PaymentID     string
+	PrintURL      string
 	Params
 }

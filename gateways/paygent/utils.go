@@ -64,7 +64,7 @@ func extractTransactionFromPaygentResponse(params Response) (transaction gomerch
 		case "40", "41":
 			transaction.Paid = true
 			transaction.Captured = true
-		case "32", "33", "42", "55", "60":
+		case "32", "33", "42", "55", "60", "12", "61":
 			transaction.Cancelled = true
 		}
 	}
@@ -75,6 +75,7 @@ func extractTransactionFromPaygentResponse(params Response) (transaction gomerch
 // Paygent Status Code meaning
 // 10 Applied
 // 11 Authorization failed
+// 12 コンビニ決済(番号方式) 支払期限切: ConveniencePay deadline exceeded.
 // 13 3D Secure suspended
 // 14 3D Secure authentication
 
@@ -90,3 +91,4 @@ func extractTransactionFromPaygentResponse(params Response) (transaction gomerch
 // 42 Sales being cancelled
 // 55 Sales cancellation requested
 // 60 Sales cancelled
+// 61 コンビニ決済(番号方式) 速報取消済: ConveniencePay cancelled

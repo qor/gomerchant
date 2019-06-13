@@ -351,6 +351,32 @@ func (paygent *Paygent) Void(transactionID string, params gomerchant.VoidParams)
 	return response, err
 }
 
+func (paygent *Paygent) ConveniencePay(amount uint64, params gomerchant.ConveniencePayParams) (gomerchant.ConveniencePayResponse, error) {
+	var (
+		response      gomerchant.ConveniencePayResponse
+		requestParams = gomerchant.Params{
+			"payment_amount": amount,
+			"cvs_type":       params.CvsType,
+			"sales_type":     1, // pre-paid
+		}
+	)
+
+	results, err := paygent.Request("030", requestParams)
+	fmt.Println("gomerchant debug: convenience pay response:", results)
+
+	response.Params = results.Params
+	if receiptNumber, ok := results.Get("receipt_number"); ok {
+		response.ReceiptNumber = fmt.Sprint(receiptNumber)
+	}
+	if paymentID, ok := results.Get("payment_id"); ok {
+		response.PaymentID = fmt.Sprint(paymentID)
+	}
+	if printURL, ok := results.Get("receipt_print_url"); ok {
+		response.PrintURL = fmt.Sprint(printURL)
+	}
+	return response, err
+}
+
 func (paygent *Paygent) Query(transactionID string) (gomerchant.Transaction, error) {
 	results, err := paygent.Request("094", gomerchant.Params{"payment_id": transactionID})
 	transaction := extractTransactionFromPaygentResponse(results)
