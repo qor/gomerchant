@@ -1,6 +1,9 @@
 package gomerchant
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+)
 
 // PaymentGateway interface
 type PaymentGateway interface {
@@ -10,7 +13,7 @@ type PaymentGateway interface {
 	Refund(transactionID string, amount uint, params RefundParams) (RefundResponse, error)
 	Void(transactionID string, params VoidParams) (VoidResponse, error)
 
-	ConveniencePay(amount uint64, params ConveniencePayParams) (ConveniencePayResponse, error)
+	ConveniencePay(amount uint64, params ConveniencePayParams) (*ConveniencePayResponse, error)
 	Query(transactionID string) (Transaction, error)
 }
 
@@ -80,13 +83,31 @@ type VoidResponse struct {
 	Params
 }
 
+type CvsType uint
+
+const (
+	// 7-11
+	CvsType_SevenEleven CvsType = iota + 1
+	// lawson, ministop, family mart, daily yamazaki,
+	CvsType_Lawson
+	// seico mart
+	CvsType_Seicomart
+)
+
 type ConveniencePayParams struct {
-	CvsType uint64
+	CvsType            CvsType
+	CustomerFamilyName string
+	CustomerName       string
+	// no '-'
+	CustomerTel string
+	// 0-60
+	PaymentLimitDate *uint
 }
 
 type ConveniencePayResponse struct {
-	ReceiptNumber string
-	PaymentID     string
-	PrintURL      string
+	ReceiptNumber    string
+	PaymentID        string
+	PrintURL         string
+	PaymentLimitDate *time.Time
 	Params
 }

@@ -102,8 +102,8 @@ func (*Stripe) Void(transactionID string, params gomerchant.VoidParams) (gomerch
 }
 
 // ConveniencePay dummy method to fulfil `PaymentGateway` interface, stripe doesn't have this feature
-func (*Stripe) ConveniencePay(amount uint64, params gomerchant.ConveniencePayParams) (gomerchant.ConveniencePayResponse, error) {
-	return gomerchant.ConveniencePayResponse{}, nil
+func (*Stripe) ConveniencePay(amount uint64, params gomerchant.ConveniencePayParams) (*gomerchant.ConveniencePayResponse, error) {
+	return nil, nil
 }
 
 func (*Stripe) Query(transactionID string) (gomerchant.Transaction, error) {

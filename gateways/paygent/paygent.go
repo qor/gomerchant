@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -25,6 +26,8 @@ import (
 type Paygent struct {
 	Config *Config
 }
+
+var _ gomerchant.PaymentGateway = (*Paygent)(nil)
 
 type Config struct {
 	MerchantID      string `required:"true"`
@@ -351,19 +354,33 @@ func (paygent *Paygent) Void(transactionID string, params gomerchant.VoidParams)
 	return response, err
 }
 
-func (paygent *Paygent) ConveniencePay(amount uint64, params gomerchant.ConveniencePayParams) (gomerchant.ConveniencePayResponse, error) {
-	var (
-		response      gomerchant.ConveniencePayResponse
-		requestParams = gomerchant.Params{
-			"payment_amount": amount,
-			"cvs_type":       params.CvsType,
-			"sales_type":     1, // pre-paid
-		}
-	)
+var cvsTypeCodes = map[gomerchant.CvsType]string{
+	gomerchant.CvsType_SevenEleven: "03",
+	gomerchant.CvsType_Lawson:      "02",
+	gomerchant.CvsType_Seicomart:   "01",
+}
+
+func (paygent *Paygent) ConveniencePay(amount uint64, params gomerchant.ConveniencePayParams) (response *gomerchant.ConveniencePayResponse, err error) {
+	if err = paygent.validateConveniencePayParams(params); err != nil {
+		return nil, err
+	}
+
+	requestParams := gomerchant.Params{
+		"payment_amount":       amount,
+		"cvs_type":             cvsTypeCodes[params.CvsType],
+		"customer_family_name": params.CustomerFamilyName,
+		"customer_name":        params.CustomerName,
+		"customer_tel":         params.CustomerTel,
+		"sales_type":           1, // pre-paid
+	}
+	if params.PaymentLimitDate != nil {
+		requestParams.Set("payment_limit_date", *params.PaymentLimitDate)
+	}
 
 	results, err := paygent.Request("030", requestParams)
 	fmt.Println("gomerchant debug: convenience pay response:", results)
 
+	response = &gomerchant.ConveniencePayResponse{}
 	response.Params = results.Params
 	if receiptNumber, ok := results.Get("receipt_number"); ok {
 		response.ReceiptNumber = fmt.Sprint(receiptNumber)
@@ -374,7 +391,33 @@ func (paygent *Paygent) ConveniencePay(amount uint64, params gomerchant.Convenie
 	if printURL, ok := results.Get("receipt_print_url"); ok {
 		response.PrintURL = fmt.Sprint(printURL)
 	}
+	if paymentLimitDate, ok := results.Get("payment_limit_date"); ok {
+		if t, err := time.ParseInLocation("20060102150405", fmt.Sprint(paymentLimitDate), PaygentServerTimeZone); err == nil {
+			response.PaymentLimitDate = &t
+		}
+	}
+
 	return response, err
+}
+
+func (paygent *Paygent) validateConveniencePayParams(params gomerchant.ConveniencePayParams) error {
+	if _, ok := cvsTypeCodes[params.CvsType]; !ok {
+		return gomerchant.ErrUnknownCvsType
+	}
+
+	if params.CustomerFamilyName == "" {
+		return gomerchant.ErrEmptyCustomerFamilyName
+	}
+
+	if params.CustomerName == "" {
+		return gomerchant.ErrEmptyCustomerName
+	}
+
+	if params.CustomerTel == "" {
+		return gomerchant.ErrEmptyCustomerTel
+	}
+
+	return nil
 }
 
 func (paygent *Paygent) Query(transactionID string) (gomerchant.Transaction, error) {
