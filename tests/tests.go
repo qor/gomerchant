@@ -35,6 +35,7 @@ func (testSuite TestSuite) createSavedCreditCard() (gomerchant.CreditCardRespons
 			Number:   "4242424242424242",
 			ExpMonth: 1,
 			ExpYear:  uint(time.Now().Year() + 1),
+			CVC: "1234",
 		},
 	})
 }
@@ -55,6 +56,21 @@ func (testSuite TestSuite) TestAuthorizeAndCapture(t *testing.T) {
 				Number:   "4242424242424242",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
+				CVC: "1234",
+			},
+		},
+	})
+
+	authorizeResult, err = testSuite.Gateway.Authorize(100, gomerchant.AuthorizeParams{
+		Currency: "JPY",
+		OrderID:  fmt.Sprint(time.Now().Unix()),
+		PaymentMethod: &gomerchant.PaymentMethod{
+			CreditCard: &gomerchant.CreditCard{
+				Name:     "VISA",
+				Number:   "4242424242424242",
+				ExpMonth: 1,
+				ExpYear:  uint(time.Now().Year() + 1),
+				CVC: "1234",
 			},
 		},
 	})
@@ -79,6 +95,7 @@ func (testSuite TestSuite) TestAuthorizeAndCaptureWithSavedCreditCard(t *testing
 				SavedCreditCard: &gomerchant.SavedCreditCard{
 					CustomerID:   savedCreditCard.CustomerID,
 					CreditCardID: savedCreditCard.CreditCardID,
+					CVC: "1234",
 				},
 			},
 		})
@@ -105,6 +122,7 @@ func (testSuite TestSuite) createAuth() gomerchant.AuthorizeResponse {
 				Number:   "4242424242424242",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
+				CVC: "1235",
 			},
 		},
 	})
@@ -190,20 +208,27 @@ func (testSuite TestSuite) TestVoid(t *testing.T) {
 
 func (testSuite TestSuite) TestListCreditCards(t *testing.T) {
 	if response, err := testSuite.createSavedCreditCard(); err == nil {
-		// create anotther credit card
-		testSuite.CreditCardManager.CreateCreditCard(gomerchant.CreateCreditCardParams{
+		// create another credit card
+		_,err = testSuite.CreditCardManager.CreateCreditCard(gomerchant.CreateCreditCardParams{
 			CustomerID: response.CustomerID,
 			CreditCard: &gomerchant.CreditCard{
 				Name:     "VISA",
-				Number:   "4242424242424242",
+				Number:   "4242424242424241",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
+				CVC:      "5678",
 			},
 		})
+		if err != nil {
+			t.Errorf("should not get err, but got %v ", err)
+		}
 
 		if response, err := testSuite.CreditCardManager.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: response.CustomerID}); err == nil {
 			if len(response.CreditCards) != 2 {
 				t.Errorf("Should found two saved credit cards, but got %v", response.CreditCards)
+				for _, c := range response.CreditCards {
+					fmt.Printf("%+v\n", *c)
+				}
 			}
 
 			for _, creditCard := range response.CreditCards {

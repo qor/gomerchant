@@ -39,6 +39,7 @@ type Config struct {
 	CAFileContent     string // this is required, if CAFilePath is blank
 
 	ProductionMode bool
+	SecurityCodeUse bool
 }
 
 func New(config *Config) *Paygent {
@@ -168,7 +169,6 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 		results     = Response{Params: gomerchant.Params{}}
 		client, err = paygent.Client()
 	)
-
 	if err == nil {
 		serviceURL, err = paygent.serviceURLOfTelegramKind(telegramKind)
 
@@ -243,6 +243,7 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 			"trading_id":     params.OrderID,
 			"payment_amount": amount,
 			"payment_class":  10,
+
 		}
 	)
 
@@ -255,13 +256,20 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 	}
 
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
+		if paygent.Config.SecurityCodeUse {
+			requestParams["security_code_use"]=1
+		}
 		if savedCreditCard := paymentMethod.SavedCreditCard; savedCreditCard != nil {
 			requestParams["stock_card_mode"] = 1
 			requestParams["customer_id"] = savedCreditCard.CustomerID
 			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
+			requestParams["card_conf_number"]=savedCreditCard.CVC
+
 		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
 			requestParams["card_number"] = creditCard.Number
 			requestParams["card_valid_term"] = getValidTerm(creditCard)
+			requestParams["card_conf_number"]=creditCard.CVC
+
 		} else {
 			return response, gomerchant.ErrNotSupportedPaymentMethod
 		}
