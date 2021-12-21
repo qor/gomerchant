@@ -2,11 +2,11 @@ package paygent_test
 
 import (
 	"fmt"
+	"github.com/jinzhu/configor"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/jinzhu/configor"
 	"github.com/qor/gomerchant"
 	"github.com/qor/gomerchant/gateways/paygent"
 	"github.com/qor/gomerchant/tests"
@@ -25,15 +25,16 @@ type Config struct {
 	CAFilePath     string `required:"true" default:"curl-ca-bundle.crt"`
 
 	ProductionMode bool
+	SecurityCodeUse bool
 }
 
 func init() {
-	var config = &Config{}
-	os.Setenv("CONFIGOR_ENV_PREFIX", "-")
-	if err := configor.Load(config); err != nil {
-		fmt.Println(err)
+	var config  = &Config{}
+	if err := configor.New(&configor.Config{ENVPrefix: "PAYGENT_CONFIG"}).Load(config); err != nil {
+		fmt.Println(config)
 		os.Exit(1)
 	}
+
 
 	Paygent = paygent.New(&paygent.Config{
 		MerchantID:      config.MerchantID,
@@ -43,6 +44,7 @@ func init() {
 		CertPassword:    config.CertPassword,
 		CAFilePath:      config.CAFilePath,
 		ProductionMode:  config.ProductionMode,
+		SecurityCodeUse: config.SecurityCodeUse,
 	})
 }
 
@@ -78,6 +80,7 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 						Number:   card,
 						ExpMonth: 1,
 						ExpYear:  uint(time.Now().Year() + 1),
+						CVC: "1234",
 					},
 				},
 			})

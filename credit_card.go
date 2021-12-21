@@ -23,6 +23,7 @@ var Brands = map[string]*regexp.Regexp{
 type SavedCreditCard struct {
 	CustomerID   string
 	CreditCardID string
+	CVC      string
 }
 
 type CreditCard struct {

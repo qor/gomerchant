@@ -30,13 +30,18 @@ func (paygent *Paygent) CreateCreditCard(creditCardParams gomerchant.CreateCredi
 		brand, _   = brandsMap[creditCard.Brand()]
 	)
 
-	results, err := paygent.Request("025", gomerchant.Params{
+	params := gomerchant.Params{
 		"customer_id":     creditCardParams.CustomerID,
 		"card_number":     creditCard.Number,
 		"card_valid_term": getValidTerm(creditCard),
 		"cardholder_name": creditCard.Name,
 		"card_brand":      brand,
-	}.IgnoreBlankFields())
+	}.IgnoreBlankFields()
+	if paygent.Config.SecurityCodeUse {
+		params.Set("security_code_use",1)
+		params.Set("card_conf_number",creditCard.CVC)
+	}
+	results, err := paygent.Request("025", params)
 
 	if err == nil {
 		if customerCardID, ok := results.Get("customer_card_id"); ok {
