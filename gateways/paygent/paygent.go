@@ -38,7 +38,7 @@ type Config struct {
 	CAFilePath        string // this is required, if CAFileContent is blank
 	CAFileContent     string // this is required, if CAFilePath is blank
 
-	ProductionMode bool
+	ProductionMode  bool
 	SecurityCodeUse bool
 }
 
@@ -243,7 +243,6 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 			"trading_id":     params.OrderID,
 			"payment_amount": amount,
 			"payment_class":  10,
-
 		}
 	)
 
@@ -257,18 +256,18 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
 		if paygent.Config.SecurityCodeUse {
-			requestParams["security_code_use"]=1
+			requestParams["security_code_use"] = 1
 		}
 		if savedCreditCard := paymentMethod.SavedCreditCard; savedCreditCard != nil {
 			requestParams["stock_card_mode"] = 1
 			requestParams["customer_id"] = savedCreditCard.CustomerID
 			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
-			requestParams["card_conf_number"]=savedCreditCard.CVC
+			requestParams["card_conf_number"] = savedCreditCard.CVC
 
 		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
 			requestParams["card_number"] = creditCard.Number
 			requestParams["card_valid_term"] = getValidTerm(creditCard)
-			requestParams["card_conf_number"]=creditCard.CVC
+			requestParams["card_conf_number"] = creditCard.CVC
 
 		} else {
 			return response, gomerchant.ErrNotSupportedPaymentMethod
@@ -364,4 +363,47 @@ func (paygent *Paygent) Query(transactionID string) (gomerchant.Transaction, err
 	transaction := extractTransactionFromPaygentResponse(results)
 	transaction.Params = results.Params
 	return transaction, err
+}
+
+func (paygent *Paygent) RakutePayApplicationMessage(amount uint64, params gomerchant.AuthorizeParams) error {
+	var (
+		requestParams = gomerchant.Params{
+			"trading_id":     params.OrderID,
+			"payment_amount": amount,
+		}
+	)
+	requestParams["return_url"] = "www.baidu.com"
+	requestParams["cancel_url"] = "www.google.com"
+	requestParams["goods_id[0]"] = "L1212AL"
+	requestParams["goods[0]"] = "L1212AL Name"
+	requestParams["goods_price[0]"] = 10000
+	requestParams["goods_amount[0]"] = 10000
+
+	results, err := paygent.Request("270", requestParams)
+	if err == nil {
+		// if paymentID, ok := results.Get("payment_id"); ok {
+		// 	response.TransactionID = fmt.Sprint(paymentID)
+		// }
+		fmt.Println(results)
+	}
+	return err
+}
+
+func (paygent *Paygent) RakutenPaySalesMessage(amount uint64, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
+	var (
+		response      gomerchant.AuthorizeResponse
+		requestParams = gomerchant.Params{
+			"trading_id":     params.OrderID,
+			"payment_amount": amount,
+		}
+	)
+
+	results, err := paygent.Request("271", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
 }
