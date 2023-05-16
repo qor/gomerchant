@@ -11,6 +11,7 @@ type PaymentGateway interface {
 	Void(transactionID string, params VoidParams) (VoidResponse, error)
 
 	Query(transactionID string) (Transaction, error)
+	//RakutePayApplicationMessage(amount uint64, params RakutenPayApplicationParams) (RakutenPayApplicationResponse, error)
 }
 
 // AuthorizeParams authorize params
@@ -78,3 +79,44 @@ type VoidResponse struct {
 	TransactionID string
 	Params
 }
+
+type InquiryResponse struct {
+	TransactionID     string
+	TradingID         string
+	PaymentNoticeID   string
+	PaymentInitDate   string
+	PaymentChangeDate string
+	PaymentAmount     string
+	RelatedPaymentID  string
+	PaymentStatus     string
+	SuccessCode       string
+	SuccessDetail     string
+	Params
+}
+
+type RakutenPayApplicationParams struct {
+	MerchandiseType uint64
+	PCMobileType    uint64
+	ButtonType      string
+	ReturnUrl       string
+	CancelUrl       string
+	Goods           []Good
+	Params
+}
+
+type RakutenPayApplicationResponse struct {
+	TransactionID       string
+	OrderCode           string
+	TradeGenerationDate string
+	RedirectHTML        string
+	Params
+}
+
+type Good struct {
+	ID     string
+	Name   string
+	Price  float64
+	Amount uint64
+}
+
+const RAKUTEN_PAY_PRODUCT_ID = "WholeOrderAmount"
