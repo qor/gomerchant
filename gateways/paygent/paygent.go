@@ -414,7 +414,7 @@ func (paygent *Paygent) InquiryNotification(noticeID string) (response gomerchan
 // This is rakuten pay authorize function
 // Before user confirmed on rakuten page status is 10:already applid
 // After user confirmed status change to 20: Authorization OK
-func (paygent *Paygent) RakutePayApplicationMessage(amount uint64, params gomerchant.RakutenPayApplicationParams) (gomerchant.RakutenPayApplicationResponse, error) {
+func (paygent *Paygent) RakutePayApplicationMessage(amount uint64, params gomerchant.ApplicationParams) (gomerchant.ApplicationResponse, error) {
 	var (
 		requestParams = gomerchant.Params{
 			"payment_amount":   amount,
@@ -432,7 +432,7 @@ func (paygent *Paygent) RakutePayApplicationMessage(amount uint64, params gomerc
 		requestParams[fmt.Sprintf("goods_price[%d]", i)] = g.Price
 		requestParams[fmt.Sprintf("goods_amount[%d]", i)] = g.Amount
 	}
-	var res gomerchant.RakutenPayApplicationResponse
+	var res gomerchant.ApplicationResponse
 	results, err := paygent.Request("270", requestParams)
 	if err == nil {
 		if paymentID, ok := results.Get("payment_id"); ok {
@@ -519,7 +519,7 @@ func (paygent *Paygent) RakutenPayCorrectionMessage(transactionID string, amount
 }
 
 // Paypay authrioze function
-func (paygent *Paygent) PayPayApplicationMessage(amount uint64, params gomerchant.RakutenPayApplicationParams) (gomerchant.RakutenPayApplicationResponse, error) {
+func (paygent *Paygent) PayPayApplicationMessage(amount uint64, params gomerchant.ApplicationParams) (gomerchant.ApplicationResponse, error) {
 	var (
 		requestParams = gomerchant.Params{
 			"payment_amount": amount,
@@ -527,7 +527,7 @@ func (paygent *Paygent) PayPayApplicationMessage(amount uint64, params gomerchan
 			"cancel_url":     params.CancelUrl,
 		}
 	)
-	var res gomerchant.RakutenPayApplicationResponse
+	var res gomerchant.ApplicationResponse
 	results, err := paygent.Request("420", requestParams)
 	if err == nil {
 		if paymentID, ok := results.Get("payment_id"); ok {

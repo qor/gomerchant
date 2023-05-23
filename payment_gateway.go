@@ -94,7 +94,7 @@ type InquiryResponse struct {
 	Params
 }
 
-type RakutenPayApplicationParams struct {
+type ApplicationParams struct {
 	MerchandiseType uint64
 	PCMobileType    uint64
 	ButtonType      string
@@ -104,7 +104,7 @@ type RakutenPayApplicationParams struct {
 	Params
 }
 
-type RakutenPayApplicationResponse struct {
+type ApplicationResponse struct {
 	TransactionID       string
 	OrderCode           string
 	TradeGenerationDate string
