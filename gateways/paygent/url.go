@@ -42,4 +42,8 @@ var TelegramServiceURLs = map[string]string{
 	"271": "/n/rakutenid/request",
 	"272": "/n/rakutenid/request",
 	"273": "/n/rakutenid/request",
+	//pay pay
+	"420": "/n/paypay/request",
+	"421": "/n/paypay/request",
+	"422": "/n/paypay/request",
 }
