@@ -517,3 +517,74 @@ func (paygent *Paygent) RakutenPayCorrectionMessage(transactionID string, amount
 	response.Params = results.Params
 	return response, err
 }
+
+// Paypay authrioze function
+func (paygent *Paygent) PayPayApplicationMessage(amount uint64, params gomerchant.RakutenPayApplicationParams) (gomerchant.RakutenPayApplicationResponse, error) {
+	var (
+		requestParams = gomerchant.Params{
+			"payment_amount": amount,
+			"return_url":     params.ReturnUrl,
+			"cancel_url":     params.CancelUrl,
+		}
+	)
+	var res gomerchant.RakutenPayApplicationResponse
+	results, err := paygent.Request("420", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			res.TransactionID = fmt.Sprint(paymentID)
+		}
+
+		if tradeGenerationDate, ok := results.Get("trade_generation_date"); ok {
+			res.TradeGenerationDate = fmt.Sprint(tradeGenerationDate)
+		}
+
+		//Rakuten pay reponse redirect_html can not be find, so here need to do more logic
+		redirectHTML := strings.Split(results.RawBody, "redirect_html=")
+		if len(redirectHTML) == 2 {
+			res.RedirectHTML = redirectHTML[1]
+
+		}
+		return res, nil
+	}
+	return res, err
+}
+
+func (paygent *Paygent) PayPaySalesMessage(transactionID string) (gomerchant.CaptureResponse, error) {
+	var (
+		response      gomerchant.CaptureResponse
+		requestParams = gomerchant.Params{
+			"payment_id": transactionID,
+		}
+	)
+
+	results, err := paygent.Request("422", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
+
+func (paygent *Paygent) PayPayCancelAndRefundMessage(transactionID string, amount uint) (gomerchant.RefundResponse, error) {
+	var (
+		response      gomerchant.RefundResponse
+		requestParams = gomerchant.Params{
+			"payment_id": transactionID,
+		}
+	)
+
+	if amount > 0 {
+		requestParams["refund_amount"] = amount
+	}
+
+	results, err := paygent.Request("421", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
