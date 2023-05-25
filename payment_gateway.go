@@ -87,7 +87,7 @@ type InquiryResponse struct {
 	PaymentInitDate   string
 	PaymentChangeDate string
 	PaymentAmount     string
-	RelatedPaymentID  string
+	BasePaymentID     string
 	PaymentStatus     string
 	SuccessCode       string
 	SuccessDetail     string

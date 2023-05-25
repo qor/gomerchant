@@ -392,8 +392,8 @@ func (paygent *Paygent) InquiryNotification(noticeID string) (response gomerchan
 			response.PaymentAmount = fmt.Sprint(paymentAmount)
 		}
 
-		if relatedPaymentID, ok := results.Get("related_payment_id"); ok {
-			response.RelatedPaymentID = fmt.Sprint(relatedPaymentID)
+		if basePaymentID, ok := results.Get("base_payment_id"); ok {
+			response.BasePaymentID = fmt.Sprint(basePaymentID)
 		}
 
 		if paymentStatus, ok := results.Get("payment_status"); ok {
