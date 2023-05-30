@@ -576,7 +576,7 @@ func (paygent *Paygent) PayPayCancelAndRefundMessage(transactionID string, amoun
 	)
 
 	if amount > 0 {
-		requestParams["refund_amount"] = amount
+		requestParams["repayment_amount"] = amount
 	}
 
 	results, err := paygent.Request("421", requestParams)
