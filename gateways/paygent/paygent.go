@@ -38,7 +38,7 @@ type Config struct {
 	CAFilePath        string // this is required, if CAFileContent is blank
 	CAFileContent     string // this is required, if CAFilePath is blank
 
-	ProductionMode bool
+	ProductionMode  bool
 	SecurityCodeUse bool
 }
 
@@ -188,7 +188,6 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 			}
 
 			response, err = client.Post(serviceURL.String(), "application/x-www-form-urlencoded", strings.NewReader(urlValues.Encode()))
-
 			if err == nil {
 				if response.StatusCode == 200 {
 					defer response.Body.Close()
@@ -224,7 +223,6 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 								err = errors.New("failed to process this request")
 							}
 						}
-
 						return results, err
 					}
 				}
@@ -243,7 +241,6 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 			"trading_id":     params.OrderID,
 			"payment_amount": amount,
 			"payment_class":  10,
-
 		}
 	)
 
@@ -257,18 +254,18 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
 		if paygent.Config.SecurityCodeUse {
-			requestParams["security_code_use"]=1
+			requestParams["security_code_use"] = 1
 		}
 		if savedCreditCard := paymentMethod.SavedCreditCard; savedCreditCard != nil {
 			requestParams["stock_card_mode"] = 1
 			requestParams["customer_id"] = savedCreditCard.CustomerID
 			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
-			requestParams["card_conf_number"]=savedCreditCard.CVC
+			requestParams["card_conf_number"] = savedCreditCard.CVC
 
 		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
 			requestParams["card_number"] = creditCard.Number
 			requestParams["card_valid_term"] = getValidTerm(creditCard)
-			requestParams["card_conf_number"]=creditCard.CVC
+			requestParams["card_conf_number"] = creditCard.CVC
 
 		} else {
 			return response, gomerchant.ErrNotSupportedPaymentMethod
@@ -364,4 +361,230 @@ func (paygent *Paygent) Query(transactionID string) (gomerchant.Transaction, err
 	transaction := extractTransactionFromPaygentResponse(results)
 	transaction.Params = results.Params
 	return transaction, err
+}
+
+func (paygent *Paygent) InquiryNotification(noticeID string) (response gomerchant.InquiryResponse, err error) {
+	reqParam := gomerchant.Params{}
+	if len(noticeID) != 0 {
+		reqParam["payment_notice_id"] = noticeID
+	}
+	results, err := paygent.Request("091", reqParam)
+	response.Params = results.Params
+	if paymentID, ok := getPaymentID(results); ok {
+		response.TransactionID = paymentID
+		if tradingID, ok := results.Get("trading_id"); ok {
+			response.TradingID = fmt.Sprint(tradingID)
+		}
+
+		if paymentNoticeID, ok := results.Get("payment_notice_id"); ok {
+			response.PaymentNoticeID = fmt.Sprint(paymentNoticeID)
+		}
+
+		if paymentInitDate, ok := results.Get("payment_init_date"); ok {
+			response.PaymentInitDate = fmt.Sprint(paymentInitDate)
+		}
+
+		if paymentChangeDate, ok := results.Get("change_date"); ok {
+			response.PaymentChangeDate = fmt.Sprint(paymentChangeDate)
+		}
+
+		if paymentAmount, ok := results.Get("payment_amount"); ok {
+			response.PaymentAmount = fmt.Sprint(paymentAmount)
+		}
+
+		if basePaymentID, ok := results.Get("base_payment_id"); ok {
+			response.BasePaymentID = fmt.Sprint(basePaymentID)
+		}
+
+		if paymentStatus, ok := results.Get("payment_status"); ok {
+			response.PaymentStatus = fmt.Sprint(paymentStatus)
+		}
+	}
+
+	if successCode, ok := results.Get("success_code"); ok {
+		response.SuccessCode = fmt.Sprint(successCode)
+	}
+
+	if successDetail, ok := results.Get("success_detail"); ok {
+		response.SuccessDetail = fmt.Sprint(successDetail)
+	}
+	return response, err
+}
+
+// This is rakuten pay authorize function
+// Before user confirmed on rakuten page status is 10:already applid
+// After user confirmed status change to 20: Authorization OK
+func (paygent *Paygent) RakutePayApplicationMessage(amount uint64, params gomerchant.ApplicationParams) (gomerchant.ApplicationResponse, error) {
+	var (
+		requestParams = gomerchant.Params{
+			"payment_amount":   amount,
+			"merchandise_type": params.MerchandiseType,
+			"pc_mobile_type":   params.PCMobileType,
+			"button_type":      params.ButtonType,
+			"return_url":       params.ReturnUrl,
+			"cancel_url":       params.CancelUrl,
+		}
+	)
+
+	for i, g := range params.Goods {
+		requestParams[fmt.Sprintf("goods[%d]", i)] = g.Name
+		requestParams[fmt.Sprintf("goods_id[%d]", i)] = g.ID
+		requestParams[fmt.Sprintf("goods_price[%d]", i)] = g.Price
+		requestParams[fmt.Sprintf("goods_amount[%d]", i)] = g.Amount
+	}
+	var res gomerchant.ApplicationResponse
+	results, err := paygent.Request("270", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			res.TransactionID = fmt.Sprint(paymentID)
+		}
+
+		if tradeGenerationDate, ok := results.Get("trade_generation_date"); ok {
+			res.TradeGenerationDate = fmt.Sprint(tradeGenerationDate)
+		}
+
+		//Rakuten pay reponse redirect_html can not be find, so here need to do more logic
+		redirectHTML := strings.Split(results.RawBody, "redirect_html=")
+		if len(redirectHTML) == 2 {
+			res.RedirectHTML = redirectHTML[1]
+
+		}
+		return res, nil
+	}
+	return res, err
+}
+
+// This is rakuten pay capture function
+func (paygent *Paygent) RakutenPaySalesMessage(transactionID string) (gomerchant.CaptureResponse, error) {
+	var (
+		response      gomerchant.CaptureResponse
+		requestParams = gomerchant.Params{
+			"payment_id": transactionID,
+		}
+	)
+
+	results, err := paygent.Request("271", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
+
+// This is rakuten pay void function
+func (paygent *Paygent) RakutenPayCancellationMessage(transactionID string) (gomerchant.VoidResponse, error) {
+	var (
+		response      gomerchant.VoidResponse
+		requestParams = gomerchant.Params{
+			"payment_id": transactionID,
+		}
+	)
+
+	results, err := paygent.Request("272", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
+
+func (paygent *Paygent) RakutenPayCorrectionMessage(transactionID string, amount uint) (gomerchant.RefundResponse, error) {
+	var (
+		response      gomerchant.RefundResponse
+		requestParams = gomerchant.Params{
+			"payment_id":     transactionID,
+			"payment_amount": amount,
+			//Because it's hard to specify every item price in our system
+			//Like order with discount, it's so hard to calculate every item price and need equals total amounts.
+			//So we set whole order as a goods to rakuten pay
+			//If we could fix this problem later. Should be care with `del_flg`. Please read the documentation carefully [https://theplanttokyo.atlassian.net/browse/LAX-3319]
+			"goods_id[0]":     gomerchant.RAKUTEN_PAY_PRODUCT_ID,
+			"goods_price[0]":  amount,
+			"goods_amount[0]": 1,
+		}
+	)
+
+	results, err := paygent.Request("273", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
+
+// Paypay authrioze function
+func (paygent *Paygent) PayPayApplicationMessage(amount uint64, params gomerchant.ApplicationParams) (gomerchant.ApplicationResponse, error) {
+	var (
+		requestParams = gomerchant.Params{
+			"payment_amount": amount,
+			"return_url":     params.ReturnUrl,
+			"cancel_url":     params.CancelUrl,
+		}
+	)
+	var res gomerchant.ApplicationResponse
+	results, err := paygent.Request("420", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			res.TransactionID = fmt.Sprint(paymentID)
+		}
+
+		if tradeGenerationDate, ok := results.Get("trade_generation_date"); ok {
+			res.TradeGenerationDate = fmt.Sprint(tradeGenerationDate)
+		}
+
+		//Rakuten pay reponse redirect_html can not be find, so here need to do more logic
+		redirectHTML := strings.Split(results.RawBody, "redirect_html=")
+		if len(redirectHTML) == 2 {
+			res.RedirectHTML = redirectHTML[1]
+
+		}
+		return res, nil
+	}
+	return res, err
+}
+
+func (paygent *Paygent) PayPaySalesMessage(transactionID string) (gomerchant.CaptureResponse, error) {
+	var (
+		response      gomerchant.CaptureResponse
+		requestParams = gomerchant.Params{
+			"payment_id": transactionID,
+		}
+	)
+
+	results, err := paygent.Request("422", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
+
+func (paygent *Paygent) PayPayCancelAndRefundMessage(transactionID string, amount uint) (gomerchant.RefundResponse, error) {
+	var (
+		response      gomerchant.RefundResponse
+		requestParams = gomerchant.Params{
+			"payment_id": transactionID,
+		}
+	)
+
+	if amount > 0 {
+		requestParams["repayment_amount"] = amount
+	}
+
+	results, err := paygent.Request("421", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
 }

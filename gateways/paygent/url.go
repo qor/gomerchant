@@ -37,4 +37,13 @@ var TelegramServiceURLs = map[string]string{
 	"13": "/n/paypal/request",
 	// ###電子マネー決済URL###
 	"15": "/n/emoney/request",
+	//rakuten pay
+	"270": "/n/rakutenid/request",
+	"271": "/n/rakutenid/request",
+	"272": "/n/rakutenid/request",
+	"273": "/n/rakutenid/request",
+	//pay pay
+	"420": "/n/paypay/request",
+	"421": "/n/paypay/request",
+	"422": "/n/paypay/request",
 }
