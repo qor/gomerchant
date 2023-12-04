@@ -11,7 +11,6 @@ type PaymentGateway interface {
 	Void(transactionID string, params VoidParams) (VoidResponse, error)
 
 	Query(transactionID string) (Transaction, error)
-	//RakutePayApplicationMessage(amount uint64, params RakutenPayApplicationParams) (RakutenPayApplicationResponse, error)
 }
 
 // AuthorizeParams authorize params
