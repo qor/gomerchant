@@ -1,6 +1,6 @@
 module github.com/qor/gomerchant
 
-go 1.19
+go 1.21
 
 require (
 	github.com/jinzhu/configor v1.2.1
