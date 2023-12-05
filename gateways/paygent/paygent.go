@@ -589,10 +589,11 @@ func (paygent *Paygent) PayPayCancelAndRefundMessage(transactionID string, amoun
 	return response, err
 }
 
-func (paygent *Paygent) ApplePayAuth(amount int, applePayToken string) (gomerchant.AuthorizeResponse, error) {
+func (paygent *Paygent) ApplePayAuth(amount int, applePayToken string, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
 	var (
 		response      gomerchant.AuthorizeResponse
 		requestParams = gomerchant.Params{
+			"trading_id":     params.OrderID,
 			"payment_amount": amount,
 			//Fixed value, 10 means one time payment
 			"payment_class":                10,
