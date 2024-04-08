@@ -12,5 +12,5 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/stretchr/testify v1.8.2 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	gopkg.in/yaml.v2 v2.2.2 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
