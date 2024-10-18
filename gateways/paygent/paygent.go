@@ -2,7 +2,6 @@ package paygent
 
 import (
 	"bytes"
-	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -87,33 +86,37 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 				break
 			}
 
-			if block.Type == "CERTIFICATE" && len(certBytes) == 0 {
-				if len(certBytes) == 0 {
-					certBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
-				}
-			}
+			switch block.Type {
+			case "ENCRYPTED PRIVATE KEY":
+				{
+					if privateKey, err := pkcs8.ParsePKCS8PrivateKey(block.Bytes, []byte(paygent.Config.CertPassword)); err == nil {
+						privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+						if err != nil {
+							return nil, err
+						}
 
-			if block.Type == "RSA PRIVATE KEY" {
-				if x509.IsEncryptedPEMBlock(block) {
-					if results, err := x509.DecryptPEMBlock(block, []byte(paygent.Config.CertPassword)); err == nil {
-						certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(results) + "\n-----END RSA PRIVATE KEY-----")
+						certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(privateKeyBytes) + "\n-----END RSA PRIVATE KEY-----")
 					} else {
 						return nil, err
 					}
-				} else {
-					certKeyBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
 				}
-			}
-
-			if block.Type == "ENCRYPTED PRIVATE KEY" {
-				if results, err := pkcs8.ParsePKCS8PrivateKey(block.Bytes, []byte(paygent.Config.CertPassword)); err == nil {
-					privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(results.(*rsa.PrivateKey))
-					if err != nil {
-						return nil, err
+			case "RSA PRIVATE KEY":
+				{
+					if x509.IsEncryptedPEMBlock(block) {
+						if results, err := x509.DecryptPEMBlock(block, []byte(paygent.Config.CertPassword)); err == nil {
+							certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(results) + "\n-----END RSA PRIVATE KEY-----")
+						} else {
+							return nil, err
+						}
+					} else {
+						certKeyBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
 					}
-					certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(privateKeyBytes) + "\n-----END RSA PRIVATE KEY-----")
-				} else {
-					return nil, err
+				}
+			case "CERTIFICATE":
+				{
+					if len(certBytes) == 0 {
+						certBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
+					}
 				}
 			}
 		}
