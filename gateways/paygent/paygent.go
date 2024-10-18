@@ -2,6 +2,7 @@ package paygent
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -16,10 +17,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/qor/gomerchant"
+
+	"github.com/youmark/pkcs8"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
-
-	"github.com/qor/gomerchant"
 )
 
 type Paygent struct {
@@ -100,6 +102,18 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 					}
 				} else {
 					certKeyBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
+				}
+			}
+
+			if block.Type == "ENCRYPTED PRIVATE KEY" {
+				if results, err := pkcs8.ParsePKCS8PrivateKey(block.Bytes, []byte(paygent.Config.CertPassword)); err == nil {
+					privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(results.(*rsa.PrivateKey))
+					if err != nil {
+						return nil, err
+					}
+					certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(privateKeyBytes) + "\n-----END RSA PRIVATE KEY-----")
+				} else {
+					return nil, err
 				}
 			}
 		}
