@@ -16,10 +16,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/qor/gomerchant"
+
+	"github.com/youmark/pkcs8"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
-
-	"github.com/qor/gomerchant"
 )
 
 type Paygent struct {
@@ -85,21 +86,37 @@ func (paygent *Paygent) Client() (*http.Client, error) {
 				break
 			}
 
-			if block.Type == "CERTIFICATE" && len(certBytes) == 0 {
-				if len(certBytes) == 0 {
-					certBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
-				}
-			}
+			switch block.Type {
+			case "ENCRYPTED PRIVATE KEY":
+				{
+					if privateKey, err := pkcs8.ParsePKCS8PrivateKey(block.Bytes, []byte(paygent.Config.CertPassword)); err == nil {
+						privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+						if err != nil {
+							return nil, err
+						}
 
-			if block.Type == "RSA PRIVATE KEY" {
-				if x509.IsEncryptedPEMBlock(block) {
-					if results, err := x509.DecryptPEMBlock(block, []byte(paygent.Config.CertPassword)); err == nil {
-						certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(results) + "\n-----END RSA PRIVATE KEY-----")
+						certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(privateKeyBytes) + "\n-----END RSA PRIVATE KEY-----")
 					} else {
 						return nil, err
 					}
-				} else {
-					certKeyBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
+				}
+			case "RSA PRIVATE KEY":
+				{
+					if x509.IsEncryptedPEMBlock(block) {
+						if results, err := x509.DecryptPEMBlock(block, []byte(paygent.Config.CertPassword)); err == nil {
+							certKeyBytes = []byte("-----BEGIN RSA PRIVATE KEY-----\n" + base64.StdEncoding.EncodeToString(results) + "\n-----END RSA PRIVATE KEY-----")
+						} else {
+							return nil, err
+						}
+					} else {
+						certKeyBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
+					}
+				}
+			case "CERTIFICATE":
+				{
+					if len(certBytes) == 0 {
+						certBytes = originalPemData[0 : len(originalPemData)-len(pemData)-1]
+					}
 				}
 			}
 		}
