@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/qor/gomerchant"
-
 	"github.com/youmark/pkcs8"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -31,6 +30,7 @@ type Config struct {
 	MerchantID      string `required:"true"`
 	ConnectID       string `required:"true"`
 	ConnectPassword string `required:"true"`
+	MerchantName    string
 	TelegramVersion string
 
 	CertPassword      string
@@ -600,6 +600,47 @@ func (paygent *Paygent) PayPayCancelAndRefundMessage(transactionID string, amoun
 	if err == nil {
 		if paymentID, ok := results.Get("payment_id"); ok {
 			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
+
+func (paygent *Paygent) Start3DS2Authentication(params gomerchant.Start3DS2AuthenticationParams) (response gomerchant.Start3DS2AuthenticationResponse, err error) {
+	var (
+		requestParams = gomerchant.Params{
+			"trading_id":          params.OrderID,
+			"payment_amount":      params.Amount,
+			"term_url":            params.TermURL,
+			"authentication_type": "01",
+			"merchant_name":       paygent.Config.MerchantName,
+		}
+	)
+	if params.PaymentMethod == nil {
+		return response, gomerchant.ErrNotSupportedPaymentMethod
+	}
+	if savedCreditCard := params.PaymentMethod.SavedCreditCard; savedCreditCard != nil {
+		requestParams["card_set_method"] = "customer"
+		requestParams["customer_id"] = savedCreditCard.CustomerID
+		requestParams["customer_card_id"] = savedCreditCard.CreditCardID
+		requestParams["card_conf_number"] = savedCreditCard.CVC
+
+	} else if creditCard := params.PaymentMethod.CreditCard; creditCard != nil {
+		requestParams["card_set_method"] = "direct"
+		requestParams["card_number"] = creditCard.Number
+		requestParams["card_valid_term"] = getValidTerm(creditCard)
+		requestParams["card_conf_number"] = creditCard.CVC
+	} else {
+		return response, gomerchant.ErrNotSupportedPaymentMethod
+	}
+	results, err := paygent.Request("450", requestParams)
+	if err == nil {
+		splitHTML := strings.Split(results.RawBody, "out_acs_html=")
+		if len(splitHTML) == 2 {
+			response.OutAcsHTML = strings.TrimSpace(splitHTML[1])
+		}
+		if res, ok := results.Get("result"); ok {
+			response.Result = fmt.Sprint(res)
 		}
 	}
 	response.Params = results.Params

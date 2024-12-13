@@ -118,4 +118,17 @@ type Good struct {
 	Amount uint64
 }
 
+type Start3DS2AuthenticationParams struct {
+	TermURL       string
+	OrderID       string
+	Amount        uint64
+	PaymentMethod *PaymentMethod
+}
+
+type Start3DS2AuthenticationResponse struct {
+	OutAcsHTML string
+	Result     string
+	Params
+}
+
 const RAKUTEN_PAY_PRODUCT_ID = "WholeOrderAmount"
