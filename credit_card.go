@@ -21,17 +21,19 @@ var Brands = map[string]*regexp.Regexp{
 }
 
 type SavedCreditCard struct {
-	CustomerID   string
-	CreditCardID string
-	CVC      string
+	CustomerID    string
+	CreditCardID  string
+	CVC           string
+	ThreeDSAuthID string
 }
 
 type CreditCard struct {
-	Name     string
-	Number   string
-	ExpMonth uint
-	ExpYear  uint
-	CVC      string
+	Name          string
+	Number        string
+	ExpMonth      uint
+	ExpYear       uint
+	CVC           string
+	ThreeDSAuthID string
 }
 
 func (creditCard CreditCard) Brand() string {

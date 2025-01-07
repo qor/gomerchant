@@ -119,7 +119,7 @@ func TestStart3DS2Authentication(t *testing.T) {
 		},
 	})
 	if err != nil {
-		t.Error(err, res)
+		t.Error("for new creditcard: ", err, res)
 		return
 	}
 	if res.OutAcsHTML == "" {
@@ -133,20 +133,29 @@ func TestStart3DS2Authentication(t *testing.T) {
 	t.Logf("%+v", res)
 
 	// for saved creditcard
+	customerID := "customerid111aigletest"
+	response, err := Paygent.ListCreditCards(gomerchant.ListCreditCardsParams{CustomerID: customerID})
+	if err != nil {
+		t.Errorf("failed to ListCreditCards err: %+v", err)
+		return
+	}
+	if len(response.CreditCards) == 0 {
+		t.Errorf("no saved credit cards for customer %v", customerID)
+		return
+	}
 	res, err = Paygent.Start3DS2Authentication(gomerchant.Start3DS2AuthenticationParams{
 		OrderID: fmt.Sprint(time.Now().Unix()),
-		TermURL: "http://getqor.com/order/return",
+		TermURL: "https://dev-lacoste-frontend.aldt.theplant-dev.com/",
 		Amount:  10,
 		PaymentMethod: &gomerchant.PaymentMethod{
 			SavedCreditCard: &gomerchant.SavedCreditCard{
 				CustomerID:   "customerid111aigletest",
-				CreditCardID: "14332737",
-				CVC:          "1234",
+				CreditCardID: response.CreditCards[0].CreditCardID,
 			},
 		},
 	})
 	if err != nil {
-		t.Errorf("err: %+v, res: %+v", err, res)
+		t.Errorf("for saved creditcard err: %+v, res: %+v", err, res)
 		return
 	}
 	if res.OutAcsHTML == "" {
@@ -158,4 +167,23 @@ func TestStart3DS2Authentication(t *testing.T) {
 		return
 	}
 	t.Logf("%+v", res)
+}
+
+func Test3DS2Authorization(t *testing.T) {
+	resp, err := Paygent.Authorize(200000, gomerchant.AuthorizeParams{
+		Currency: "JPY",
+		OrderID:  fmt.Sprint(time.Now().Unix()),
+		PaymentMethod: &gomerchant.PaymentMethod{
+			SavedCreditCard: &gomerchant.SavedCreditCard{
+				CustomerID:   "customerid111aigletest",
+				CreditCardID: "14340385",
+				// CVC:          "1234",
+				ThreeDSAuthID: "6b1f2a0e-fe7f-4ccd-98de-7af69cdf996d",
+			},
+		},
+	})
+	if err != nil {
+		t.Errorf("error: %+v", err)
+	}
+	t.Logf("result: %+v", resp)
 }

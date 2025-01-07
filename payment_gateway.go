@@ -123,6 +123,7 @@ type Start3DS2AuthenticationParams struct {
 	OrderID       string
 	Amount        uint64
 	PaymentMethod *PaymentMethod
+	Params
 }
 
 type Start3DS2AuthenticationResponse struct {

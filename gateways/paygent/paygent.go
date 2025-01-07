@@ -27,11 +27,12 @@ type Paygent struct {
 }
 
 type Config struct {
-	MerchantID      string `required:"true"`
-	ConnectID       string `required:"true"`
-	ConnectPassword string `required:"true"`
-	MerchantName    string
-	TelegramVersion string
+	MerchantID           string `required:"true"`
+	ConnectID            string `required:"true"`
+	ConnectPassword      string `required:"true"`
+	MerchantName         string
+	TelegramVersion      string
+	ThreeDSAcceptanceKey string // 3D Secure result acceptance hash key
 
 	CertPassword      string
 	ClientFilePath    string // this is required, if ClientFileContent is blank
@@ -278,11 +279,19 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 			requestParams["customer_id"] = savedCreditCard.CustomerID
 			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
 			requestParams["card_conf_number"] = savedCreditCard.CVC
+			if savedCreditCard.ThreeDSAuthID != "" {
+				requestParams["3ds_auth_id"] = savedCreditCard.ThreeDSAuthID
+				requestParams["3dsecure_use_type"] = "2" // 3D Secure 2.0
+			}
 
 		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
 			requestParams["card_number"] = creditCard.Number
 			requestParams["card_valid_term"] = getValidTerm(creditCard)
 			requestParams["card_conf_number"] = creditCard.CVC
+			if creditCard.ThreeDSAuthID != "" {
+				requestParams["3ds_auth_id"] = creditCard.ThreeDSAuthID
+				requestParams["3dsecure_use_type"] = "2" // 3D Secure 2.0
+			}
 
 		} else {
 			return response, gomerchant.ErrNotSupportedPaymentMethod
@@ -623,7 +632,7 @@ func (paygent *Paygent) Start3DS2Authentication(params gomerchant.Start3DS2Authe
 		requestParams["card_set_method"] = "customer"
 		requestParams["customer_id"] = savedCreditCard.CustomerID
 		requestParams["customer_card_id"] = savedCreditCard.CreditCardID
-		requestParams["card_conf_number"] = savedCreditCard.CVC
+		// requestParams["card_conf_number"] = savedCreditCard.CVC
 
 	} else if creditCard := params.PaymentMethod.CreditCard; creditCard != nil {
 		requestParams["card_set_method"] = "direct"
@@ -632,6 +641,9 @@ func (paygent *Paygent) Start3DS2Authentication(params gomerchant.Start3DS2Authe
 		requestParams["card_conf_number"] = creditCard.CVC
 	} else {
 		return response, gomerchant.ErrNotSupportedPaymentMethod
+	}
+	for k, v := range params.Params {
+		requestParams[k] = v
 	}
 	results, err := paygent.Request("450", requestParams)
 	if err == nil {
