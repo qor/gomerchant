@@ -2,6 +2,7 @@ package paygent
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -30,7 +31,7 @@ type Config struct {
 	MerchantID           string `required:"true"`
 	ConnectID            string `required:"true"`
 	ConnectPassword      string `required:"true"`
-	MerchantName         string
+	MerchantName         string `required:"true"`
 	TelegramVersion      string
 	ThreeDSAcceptanceKey string // 3D Secure result acceptance hash key
 
@@ -615,7 +616,7 @@ func (paygent *Paygent) PayPayCancelAndRefundMessage(transactionID string, amoun
 	return response, err
 }
 
-func (paygent *Paygent) Start3DS2Authentication(params gomerchant.Start3DS2AuthenticationParams) (response gomerchant.Start3DS2AuthenticationResponse, err error) {
+func (paygent *Paygent) Start3DS2Authentication(ctx context.Context, params gomerchant.Start3DS2AuthenticationParams) (response gomerchant.Start3DS2AuthenticationResponse, err error) {
 	var (
 		requestParams = gomerchant.Params{
 			"trading_id":          params.OrderID,

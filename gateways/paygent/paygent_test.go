@@ -1,6 +1,7 @@
 package paygent_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -104,7 +105,7 @@ func Test3DAuthorizeAndCapture(t *testing.T) {
 
 func TestStart3DS2Authentication(t *testing.T) {
 	// for new creditcard
-	res, err := Paygent.Start3DS2Authentication(gomerchant.Start3DS2AuthenticationParams{
+	res, err := Paygent.Start3DS2Authentication(context.Background(), gomerchant.Start3DS2AuthenticationParams{
 		OrderID: fmt.Sprint(time.Now().Unix()),
 		TermURL: "http://getqor.com/order/return",
 		Amount:  10,
@@ -143,7 +144,7 @@ func TestStart3DS2Authentication(t *testing.T) {
 		t.Errorf("no saved credit cards for customer %v", customerID)
 		return
 	}
-	res, err = Paygent.Start3DS2Authentication(gomerchant.Start3DS2AuthenticationParams{
+	res, err = Paygent.Start3DS2Authentication(context.Background(), gomerchant.Start3DS2AuthenticationParams{
 		OrderID: fmt.Sprint(time.Now().Unix()),
 		TermURL: "https://dev-lacoste-frontend.aldt.theplant-dev.com/",
 		Amount:  10,
