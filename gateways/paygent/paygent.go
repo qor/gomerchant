@@ -31,7 +31,7 @@ type Config struct {
 	MerchantID           string `required:"true"`
 	ConnectID            string `required:"true"`
 	ConnectPassword      string `required:"true"`
-	MerchantName         string `required:"true"`
+	MerchantName         string
 	TelegramVersion      string
 	ThreeDSAcceptanceKey string // 3D Secure result acceptance hash key
 
