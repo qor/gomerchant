@@ -605,3 +605,83 @@ func (paygent *Paygent) PayPayCancelAndRefundMessage(transactionID string, amoun
 	response.Params = results.Params
 	return response, err
 }
+
+func (paygent *Paygent) ApplePayAuth(amount int, applePayToken string, params gomerchant.AuthorizeParams) (gomerchant.AuthorizeResponse, error) {
+	var (
+		response      gomerchant.AuthorizeResponse
+		requestParams = gomerchant.Params{
+			"trading_id":     params.OrderID,
+			"payment_amount": amount,
+			//Fixed value, 10 means one time payment
+			"payment_class":                10,
+			"apple_pay_payment_token_data": applePayToken,
+		}
+	)
+
+	results, err := paygent.Request("320", requestParams)
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
+
+func (paygent *Paygent) ApplePayCapture(transactionID string, params gomerchant.CaptureParams) (gomerchant.CaptureResponse, error) {
+	var (
+		response      gomerchant.CaptureResponse
+		requestParams = gomerchant.Params{"payment_id": transactionID}
+	)
+
+	results, err := paygent.Request("322", requestParams)
+
+	if err == nil {
+		if paymentID, ok := results.Get("payment_id"); ok {
+			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+
+	return response, err
+}
+
+func (paygent *Paygent) ApplePayVoid(transactionID string, params gomerchant.VoidParams) (response gomerchant.VoidResponse, err error) {
+	var results Response
+
+	if params.Captured {
+		results, err = paygent.Request("323", gomerchant.Params{"payment_id": transactionID})
+	} else {
+		results, err = paygent.Request("321", gomerchant.Params{"payment_id": transactionID})
+	}
+
+	response.Params = results.Params
+	if paymentID, ok := getPaymentID(results); ok {
+		response.TransactionID = paymentID
+	}
+
+	return response, err
+}
+
+func (paygent *Paygent) ApplePayRefund(transactionID string, amount uint, params gomerchant.RefundParams) (response gomerchant.RefundResponse, err error) {
+	var (
+		results       Response
+		requestParams = gomerchant.Params{
+			"payment_id":     transactionID,
+			"payment_amount": amount,
+		}
+	)
+
+	if params.Captured {
+		results, err = paygent.Request("325", requestParams)
+	} else {
+		results, err = paygent.Request("324", requestParams)
+	}
+
+	response.Params = results.Params
+	if paymentID, ok := getPaymentID(results); ok {
+		response.TransactionID = paymentID
+	}
+
+	return response, err
+}

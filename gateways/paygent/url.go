@@ -46,4 +46,11 @@ var TelegramServiceURLs = map[string]string{
 	"420": "/n/paypay/request",
 	"421": "/n/paypay/request",
 	"422": "/n/paypay/request",
+	//apple pay
+	"320": "/n/applepay/request",
+	"321": "/n/applepay/request",
+	"322": "/n/applepay/request",
+	"323": "/n/applepay/request",
+	"324": "/n/applepay/request",
+	"325": "/n/applepay/request",
 }
