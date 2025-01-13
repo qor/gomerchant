@@ -211,10 +211,10 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 				if response.StatusCode == 200 {
 					defer response.Body.Close()
 					var bodyBytes []byte
-					bodyBytes, err = ioutil.ReadAll(response.Body)
+					bodyBytes, err = io.ReadAll(response.Body)
 
 					shiftJISToUTF8 := transform.NewReader(bytes.NewReader(bodyBytes), japanese.ShiftJIS.NewDecoder())
-					utf8Bytes, _ := ioutil.ReadAll(shiftJISToUTF8)
+					utf8Bytes, _ := io.ReadAll(shiftJISToUTF8)
 					results.RawBody = string(utf8Bytes)
 					results.Params.Set("RawBody", results.RawBody)
 
@@ -279,7 +279,7 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 			requestParams["stock_card_mode"] = 1
 			requestParams["customer_id"] = savedCreditCard.CustomerID
 			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
-			requestParams["card_conf_number"] = savedCreditCard.CVC
+			// requestParams["card_conf_number"] = savedCreditCard.CVC
 			if savedCreditCard.ThreeDSAuthID != "" {
 				requestParams["3ds_auth_id"] = savedCreditCard.ThreeDSAuthID
 				requestParams["3dsecure_use_type"] = "2" // 3D Secure 2.0
