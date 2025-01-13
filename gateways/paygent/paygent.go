@@ -272,9 +272,6 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 	}
 
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
-		if paygent.Config.SecurityCodeUse {
-			requestParams["security_code_use"] = 1
-		}
 		if savedCreditCard := paymentMethod.SavedCreditCard; savedCreditCard != nil {
 			requestParams["stock_card_mode"] = 1
 			requestParams["customer_id"] = savedCreditCard.CustomerID
@@ -286,6 +283,9 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 			}
 
 		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
+			if paygent.Config.SecurityCodeUse {
+				requestParams["security_code_use"] = 1
+			}
 			requestParams["card_number"] = creditCard.Number
 			requestParams["card_valid_term"] = getValidTerm(creditCard)
 			requestParams["card_conf_number"] = creditCard.CVC
