@@ -212,9 +212,12 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 					defer response.Body.Close()
 					var bodyBytes []byte
 					bodyBytes, err = io.ReadAll(response.Body)
-
-					shiftJISToUTF8 := transform.NewReader(bytes.NewReader(bodyBytes), japanese.ShiftJIS.NewDecoder())
-					utf8Bytes, _ := io.ReadAll(shiftJISToUTF8)
+					utf8Bytes := bodyBytes
+					contentType := response.Header.Get("Content-Type")
+					if !strings.Contains(contentType, "charset=UTF-8") {
+						shiftJISToUTF8 := transform.NewReader(bytes.NewReader(bodyBytes), japanese.ShiftJIS.NewDecoder())
+						utf8Bytes, _ = io.ReadAll(shiftJISToUTF8)
+					}
 					results.RawBody = string(utf8Bytes)
 					results.Params.Set("RawBody", results.RawBody)
 
