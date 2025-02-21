@@ -279,14 +279,10 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 			requestParams["stock_card_mode"] = 1
 			requestParams["customer_id"] = savedCreditCard.CustomerID
 			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
+			// requestParams["card_conf_number"] = savedCreditCard.CVC
 			if savedCreditCard.ThreeDSAuthID != "" {
 				requestParams["3ds_auth_id"] = savedCreditCard.ThreeDSAuthID
 				requestParams["3dsecure_use_type"] = "2" // 3D Secure 2.0
-			} else {
-				if paygent.Config.SecurityCodeUse {
-					requestParams["security_code_use"] = 1
-				}
-				requestParams["card_conf_number"] = savedCreditCard.CVC
 			}
 
 		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
