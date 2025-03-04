@@ -112,10 +112,10 @@ func TestStart3DS2Authentication(t *testing.T) {
 		PaymentMethod: &gomerchant.PaymentMethod{
 			CreditCard: &gomerchant.CreditCard{
 				Name:     "JCB Card",
-				Number:   "5123459358515821",
+				Number:   "6011234567890123",
 				ExpMonth: 1,
 				ExpYear:  uint(time.Now().Year() + 1),
-				CVC:      "1234",
+				CVC:      "123",
 			},
 		},
 	})
@@ -177,9 +177,28 @@ func Test3DS2Authorization(t *testing.T) {
 		PaymentMethod: &gomerchant.PaymentMethod{
 			SavedCreditCard: &gomerchant.SavedCreditCard{
 				CustomerID:   "customerid111aigletest",
-				CreditCardID: "14340385",
+				CreditCardID: "14344546",
 				// CVC:          "1234",
-				ThreeDSAuthID: "6b1f2a0e-fe7f-4ccd-98de-7af69cdf996d",
+				ThreeDSAuthID: "f0e82b26-0cdd-4cfe-a966-fdf36f2a5b72",
+			},
+		},
+	})
+	if err != nil {
+		t.Errorf("error: %+v", err)
+	}
+	t.Logf("result: %+v", resp)
+
+	resp, err = Paygent.Authorize(200000, gomerchant.AuthorizeParams{
+		Currency: "JPY",
+		OrderID:  fmt.Sprint(time.Now().Unix()),
+		PaymentMethod: &gomerchant.PaymentMethod{
+			CreditCard: &gomerchant.CreditCard{
+				Name:          "JCB Card",
+				Number:        "4999999999999109",
+				ExpMonth:      1,
+				ExpYear:       uint(time.Now().Year() + 1),
+				CVC:           "123",
+				ThreeDSAuthID: "f0e82b26-0cdd-4cfe-a966-fdf36f2a5b72",
 			},
 		},
 	})
