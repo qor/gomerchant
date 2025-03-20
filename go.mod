@@ -2,8 +2,6 @@ module github.com/qor/gomerchant
 
 go 1.23.0
 
-toolchain go1.24.1
-
 require (
 	github.com/jinzhu/configor v1.2.1
 	github.com/stripe/stripe-go v70.15.0+incompatible
