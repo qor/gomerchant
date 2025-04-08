@@ -2,6 +2,7 @@ package paygent
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -17,7 +18,6 @@ import (
 	"strings"
 
 	"github.com/qor/gomerchant"
-
 	"github.com/youmark/pkcs8"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
@@ -28,10 +28,12 @@ type Paygent struct {
 }
 
 type Config struct {
-	MerchantID      string `required:"true"`
-	ConnectID       string `required:"true"`
-	ConnectPassword string `required:"true"`
-	TelegramVersion string
+	MerchantID           string `required:"true"`
+	ConnectID            string `required:"true"`
+	ConnectPassword      string `required:"true"`
+	MerchantName         string
+	TelegramVersion      string
+	ThreeDSAcceptanceKey string // 3D Secure result acceptance hash key
 
 	CertPassword      string
 	ClientFilePath    string // this is required, if ClientFileContent is blank
@@ -209,10 +211,13 @@ func (paygent *Paygent) Request(telegramKind string, params gomerchant.Params) (
 				if response.StatusCode == 200 {
 					defer response.Body.Close()
 					var bodyBytes []byte
-					bodyBytes, err = ioutil.ReadAll(response.Body)
-
-					shiftJISToUTF8 := transform.NewReader(bytes.NewReader(bodyBytes), japanese.ShiftJIS.NewDecoder())
-					utf8Bytes, _ := ioutil.ReadAll(shiftJISToUTF8)
+					bodyBytes, err = io.ReadAll(response.Body)
+					utf8Bytes := bodyBytes
+					contentType := response.Header.Get("Content-Type")
+					if !strings.Contains(contentType, "charset=UTF-8") {
+						shiftJISToUTF8 := transform.NewReader(bytes.NewReader(bodyBytes), japanese.ShiftJIS.NewDecoder())
+						utf8Bytes, _ = io.ReadAll(shiftJISToUTF8)
+					}
 					results.RawBody = string(utf8Bytes)
 					results.Params.Set("RawBody", results.RawBody)
 
@@ -270,19 +275,27 @@ func (paygent *Paygent) Authorize(amount uint64, params gomerchant.AuthorizePara
 	}
 
 	if paymentMethod := params.PaymentMethod; paymentMethod != nil {
-		if paygent.Config.SecurityCodeUse {
-			requestParams["security_code_use"] = 1
-		}
 		if savedCreditCard := paymentMethod.SavedCreditCard; savedCreditCard != nil {
 			requestParams["stock_card_mode"] = 1
 			requestParams["customer_id"] = savedCreditCard.CustomerID
 			requestParams["customer_card_id"] = savedCreditCard.CreditCardID
-			requestParams["card_conf_number"] = savedCreditCard.CVC
+			// requestParams["card_conf_number"] = savedCreditCard.CVC
+			if savedCreditCard.ThreeDSAuthID != "" {
+				requestParams["3ds_auth_id"] = savedCreditCard.ThreeDSAuthID
+				requestParams["3dsecure_use_type"] = "2" // 3D Secure 2.0
+			}
 
 		} else if creditCard := paymentMethod.CreditCard; creditCard != nil {
+			if paygent.Config.SecurityCodeUse {
+				requestParams["security_code_use"] = 1
+			}
 			requestParams["card_number"] = creditCard.Number
 			requestParams["card_valid_term"] = getValidTerm(creditCard)
 			requestParams["card_conf_number"] = creditCard.CVC
+			if creditCard.ThreeDSAuthID != "" {
+				requestParams["3ds_auth_id"] = creditCard.ThreeDSAuthID
+				requestParams["3dsecure_use_type"] = "2" // 3D Secure 2.0
+			}
 
 		} else {
 			return response, gomerchant.ErrNotSupportedPaymentMethod
@@ -600,6 +613,50 @@ func (paygent *Paygent) PayPayCancelAndRefundMessage(transactionID string, amoun
 	if err == nil {
 		if paymentID, ok := results.Get("payment_id"); ok {
 			response.TransactionID = fmt.Sprint(paymentID)
+		}
+	}
+	response.Params = results.Params
+	return response, err
+}
+
+func (paygent *Paygent) Start3DS2Authentication(ctx context.Context, params gomerchant.Start3DS2AuthenticationParams) (response gomerchant.Start3DS2AuthenticationResponse, err error) {
+	var (
+		requestParams = gomerchant.Params{
+			"trading_id":          params.OrderID,
+			"payment_amount":      params.Amount,
+			"term_url":            params.TermURL,
+			"authentication_type": "01",
+			"merchant_name":       paygent.Config.MerchantName,
+		}
+	)
+	if params.PaymentMethod == nil {
+		return response, gomerchant.ErrNotSupportedPaymentMethod
+	}
+	if savedCreditCard := params.PaymentMethod.SavedCreditCard; savedCreditCard != nil {
+		requestParams["card_set_method"] = "customer"
+		requestParams["customer_id"] = savedCreditCard.CustomerID
+		requestParams["customer_card_id"] = savedCreditCard.CreditCardID
+		// requestParams["card_conf_number"] = savedCreditCard.CVC
+
+	} else if creditCard := params.PaymentMethod.CreditCard; creditCard != nil {
+		requestParams["card_set_method"] = "direct"
+		requestParams["card_number"] = creditCard.Number
+		requestParams["card_valid_term"] = getValidTerm(creditCard)
+		requestParams["card_conf_number"] = creditCard.CVC
+	} else {
+		return response, gomerchant.ErrNotSupportedPaymentMethod
+	}
+	for k, v := range params.Params {
+		requestParams[k] = v
+	}
+	results, err := paygent.Request("450", requestParams)
+	if err == nil {
+		splitHTML := strings.Split(results.RawBody, "out_acs_html=")
+		if len(splitHTML) == 2 {
+			response.OutAcsHTML = strings.TrimSpace(splitHTML[1])
+		}
+		if res, ok := results.Get("result"); ok {
+			response.Result = fmt.Sprint(res)
 		}
 	}
 	response.Params = results.Params

@@ -46,4 +46,6 @@ var TelegramServiceURLs = map[string]string{
 	"420": "/n/paypay/request",
 	"421": "/n/paypay/request",
 	"422": "/n/paypay/request",
+	// 3ds2.0 authencation
+	"450": "n/threeds/request",
 }
