@@ -6,7 +6,7 @@ require (
 	github.com/jinzhu/configor v1.2.1
 	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
-	golang.org/x/text v0.37.0
+	golang.org/x/text v0.39.0
 )
 
 require (
