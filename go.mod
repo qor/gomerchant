@@ -1,6 +1,6 @@
 module github.com/qor/gomerchant
 
-go 1.26
+go 1.26.0
 
 require (
 	github.com/jinzhu/configor v1.2.1
@@ -12,6 +12,6 @@ require (
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/stretchr/testify v1.8.2 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
